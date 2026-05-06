@@ -301,7 +301,7 @@ function ManagerView({ calls, user, db, appId }) {
               canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', 0.7)); // We convert EVERYTHING to a pure JPEG
+              resolve(canvas.toDataURL('image/jpeg', 0.7)); 
             };
           };
         });
@@ -315,12 +315,12 @@ function ManagerView({ calls, user, db, appId }) {
           role: "user",
           parts: [
             { text: `Analyze this service call sheet. Extract: customerName, address, phone, and notes (any special instructions). Map the address to the best matching area from this list: ${SERVICE_AREAS.join(', ')}. Return valid JSON only.` },
-            { inlineData: { mimeType: "image/jpeg", data: base64Data } } // Tell Google it is definitively a JPEG
+            { inlineData: { mimeType: "image/jpeg", data: base64Data } }
           ]
         }],
         generationConfig: {
           responseMimeType: "application/json",
-          responseSchema: { // Strict JSON enforcement so it doesn't break the form
+          responseSchema: { 
             type: "OBJECT",
             properties: {
               customerName: { type: "STRING" },
@@ -333,9 +333,9 @@ function ManagerView({ calls, user, db, appId }) {
         }
       };
 
-      // CORRECTED AI MODEL ENDPOINT FOR YOUR PUBLIC API KEY
+      // --- THE FINAL FIX: Pointing to the stable, currently active Gemini 2.5 Flash engine ---
       const result = await fetchWithRetry(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
       );
 
@@ -355,7 +355,6 @@ function ManagerView({ calls, user, db, appId }) {
       }
     } catch (err) {
       console.error("AI Error:", err);
-      // Improved error message to tell us EXACTLY what broke if it fails again
       setScanError(`AI Error: ${err.message || "Couldn't read sheet."} Please enter manually.`);
     } finally {
       setIsScanning(false);
@@ -580,16 +579,16 @@ function DriverView({ calls, user, db, appId, setLoc }) {
         
         {tab === 'team' && (
           team.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No one else is working</div> :
-          <div className="grid gap-4 w-full">
+          <div className="grid gap-4 w-full px-2">
             {team.map(c => (
-              <div key={c.id} className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+              <div key={c.id} className="bg-white p-8 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 w-full">
                 <div>
-                  <h3 className="font-bold text-slate-800 text-xl uppercase tracking-tight">{c.customerName}</h3>
-                  <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mt-1">{c.area} • {c.address.split(',')[0]}</p>
+                  <h3 className="font-black text-3xl text-black uppercase tracking-tight">{c.customerName}</h3>
+                  <p className="text-lg text-blue-900 font-black uppercase tracking-widest mt-2">{c.area} • {c.address.split(',')[0]}</p>
                 </div>
-                <div className="flex items-center gap-3 bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-md border-2 border-white">
-                  <User size={20}/>
-                  <span className="font-bold uppercase text-sm tracking-widest">{c.claimedBy}</span>
+                <div className="flex items-center gap-4 bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-xl border-4 border-white">
+                  <User size={28}/>
+                  <span className="font-black uppercase text-xl tracking-widest">{c.claimedBy}</span>
                 </div>
               </div>
             ))}
@@ -600,8 +599,8 @@ function DriverView({ calls, user, db, appId, setLoc }) {
       {viewImage && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4" onClick={() => setViewImage(null)}>
           <div className="relative max-w-5xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-2 border-none cursor-pointer"><X size={40} /></button>
-            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-2xl bg-white shadow-2xl border-4 border-white" />
+            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-4 transition-colors border-none cursor-pointer"><X size={48} /></button>
+            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-3xl bg-white shadow-2xl border-[16px] border-white" />
           </div>
         </div>
       )}

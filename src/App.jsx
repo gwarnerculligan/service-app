@@ -6,7 +6,7 @@ import {
   Truck, MapPin, AlertCircle, CheckCircle, Plus, LogOut, User, Briefcase, Clock, Users, Navigation, ExternalLink, Camera, FileText, X
 } from 'lucide-react';
 
-// --- API KEY INSERTED FROM YOUR SCREENSHOT ---
+// --- YOUR GEMINI API KEY INTEGRATED ---
 const apiKey = "AIzaSyCTbgLjZw5PURGU8Kvq4E5G3Ubp2dAHpd8";
 
 // --- FIREBASE INITIALIZATION ---
@@ -134,7 +134,7 @@ export default function App() {
           min-height: 100vh !important;
           margin: 0 !important;
           padding: 0 !important;
-          background-color: #f1f5f9 !important; 
+          background-color: #f8fafc !important; 
           text-align: left !important;
           color: #0f172a !important; 
         }
@@ -233,13 +233,13 @@ function Login({ onLogin }) {
         </div>
 
         <div className="space-y-2 mb-8 text-left">
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Identity Selection</label>
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Select Your Name</label>
           <select 
             className="w-full border-2 border-slate-200 p-4 rounded-xl focus:border-blue-600 outline-none bg-slate-50 cursor-pointer text-slate-900 font-bold text-lg appearance-none shadow-sm" 
             value={name} 
             onChange={e => setName(e.target.value)} 
           >
-            <option value="" disabled>Choose name...</option>
+            <option value="" disabled>Choose...</option>
             {currentNames.map(member => (
               <option key={member} value={member}>{member}</option>
             ))}
@@ -268,6 +268,12 @@ function ManagerView({ calls, user, db, appId }) {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (!apiKey || apiKey === "") {
+        setScanError("API Key is missing in the code. Please update App.jsx line 9.");
+        return;
+    }
+
     setIsScanning(true);
     setScanError('');
     try {
@@ -315,6 +321,7 @@ function ManagerView({ calls, user, db, appId }) {
 
       const textOutput = result.candidates?.[0]?.content?.parts?.[0]?.text;
       if (textOutput) {
+        // Clean up markdown formatting if the AI added it
         const jsonStr = textOutput.replace(/```json|```/gi, '').trim();
         const data = JSON.parse(jsonStr);
         setForm(prev => ({
@@ -328,6 +335,7 @@ function ManagerView({ calls, user, db, appId }) {
         }));
       }
     } catch (err) {
+      console.error("AI Error:", err);
       setScanError("AI couldn't read the sheet. Please enter manually.");
     } finally {
       setIsScanning(false);
@@ -337,7 +345,7 @@ function ManagerView({ calls, user, db, appId }) {
   const add = async (e) => {
     e.preventDefault();
     if (!form.customerName || !form.address || !form.area) {
-      setScanError("Fill out Name, Area, and Address.");
+      setScanError("Please fill out Name, Area, and Address.");
       return;
     }
     try {
@@ -347,7 +355,7 @@ function ManagerView({ calls, user, db, appId }) {
       setShow(false);
       setForm({ customerName: '', address: '', phone: '', notes: '', urgency: 'Medium', imageUri: '', area: '' });
     } catch (err) {
-      setScanError("Save failed.");
+      setScanError("Save failed. Check connection.");
     }
   };
 
@@ -364,7 +372,7 @@ function ManagerView({ calls, user, db, appId }) {
       </div>
       
       {show && (
-        <form onSubmit={add} className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border-2 border-slate-200 space-y-6 text-left animate-in fade-in slide-in-from-top-4">
+        <form onSubmit={add} className="bg-white p-6 rounded-[2rem] shadow-xl border-2 border-slate-200 space-y-6 text-left animate-in fade-in slide-in-from-top-4">
           <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-inner">
             <div className="text-left w-full">
               <h3 className="font-bold text-blue-900 flex items-center uppercase text-sm tracking-widest"><Camera size={18} className="mr-3" /> Camera Fill</h3>
@@ -372,7 +380,8 @@ function ManagerView({ calls, user, db, appId }) {
             </div>
             <div className="w-full sm:w-auto shrink-0">
                <label className="block bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-sm uppercase hover:bg-blue-700 shadow-md cursor-pointer text-center active:scale-95 transition-all">
-                <input type="file" accept="image/*" onChange={handleImageUpload} disabled={isScanning} capture="environment" className="hidden" />
+                {/* THE HIDDEN INPUT FIX */}
+                <input type="file" accept="image/*" onChange={handleImageUpload} disabled={isScanning} capture="environment" style={{ display: 'none' }} />
                 {isScanning ? "Processing..." : "Open Camera"}
               </label>
             </div>
@@ -382,7 +391,7 @@ function ManagerView({ calls, user, db, appId }) {
           <div className="grid gap-6">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Customer Name</label>
-              <input placeholder="Name..." className="w-full border-2 border-slate-200 p-4 rounded-xl text-slate-900 font-bold text-base bg-slate-50 focus:border-blue-600 focus:bg-white outline-none" required value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} />
+              <input placeholder="Name..." className="w-full border-2 border-slate-200 p-4 rounded-xl text-slate-900 font-bold text-base bg-slate-50 focus:border-blue-500 focus:bg-white outline-none" required value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
@@ -437,7 +446,7 @@ function ManagerView({ calls, user, db, appId }) {
                       )}
                       <div className="flex flex-wrap gap-4 items-center mt-4 pt-4 border-t border-slate-100 font-bold text-[10px] uppercase tracking-widest">
                         {c.claimedAtLoc && <a href={`https://www.google.com/maps?q=${c.claimedAtLoc.lat},${c.claimedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-blue-500 flex items-center">📍 Claimed</a>}
-                        {c.completedAtLoc && <a href={`https://www.google.com/maps?q=${c.completedAtLoc.lat},${c.completedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-green-600 flex items-center">✅ Finished</a>}
+                        {c.completedAtLoc && <a href={`https://www.google.com/maps?q=${c.completedAtLoc.lat},${c.completedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-green-600 flex items-center bg-green-50 px-4 py-2 rounded-lg border-2 border-green-200 hover:bg-green-100">✅ Finished</a>}
                         {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="text-slate-500 flex items-center bg-slate-100 px-3 py-1 rounded cursor-pointer border-none font-bold uppercase">📄 View Sheet</button>}
                       </div>
                     </div>
@@ -552,16 +561,16 @@ function DriverView({ calls, user, db, appId, setLoc }) {
         
         {tab === 'team' && (
           team.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No one else is working</div> :
-          <div className="grid gap-4 w-full">
+          <div className="grid gap-4 w-full px-2">
             {team.map(c => (
-              <div key={c.id} className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+              <div key={c.id} className="bg-white p-8 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 w-full">
                 <div>
-                  <h3 className="font-bold text-slate-800 text-xl uppercase tracking-tight">{c.customerName}</h3>
-                  <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mt-1">{c.area} • {c.address.split(',')[0]}</p>
+                  <h3 className="font-black text-3xl text-black uppercase tracking-tight">{c.customerName}</h3>
+                  <p className="text-lg text-blue-900 font-black uppercase tracking-widest mt-2">{c.area} • {c.address.split(',')[0]}</p>
                 </div>
-                <div className="flex items-center gap-3 bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-md border-2 border-white">
-                  <User size={20}/>
-                  <span className="font-bold uppercase text-sm tracking-widest">{c.claimedBy}</span>
+                <div className="flex items-center gap-4 bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-xl border-4 border-white">
+                  <User size={28}/>
+                  <span className="font-black uppercase text-xl tracking-widest">{c.claimedBy}</span>
                 </div>
               </div>
             ))}
@@ -571,9 +580,9 @@ function DriverView({ calls, user, db, appId, setLoc }) {
 
       {viewImage && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4" onClick={() => setViewImage(null)}>
-          <div className="relative max-w-5xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-2 border-none cursor-pointer"><X size={40} /></button>
-            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-2xl bg-white shadow-2xl border-4 border-white" />
+          <div className="relative max-w-6xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-4 transition-colors border-none cursor-pointer"><X size={48} /></button>
+            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-3xl bg-white shadow-2xl border-[16px] border-white" />
           </div>
         </div>
       )}

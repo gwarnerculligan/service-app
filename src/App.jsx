@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 // --- API KEY INTEGRATED ---
-const apiKey = "AIzaSyCTbgLjZw5PURGU8Kvq4E5G3Ubp2dAHpd8";
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 // --- FIREBASE INITIALIZATION ---
 const firebaseConfig = {

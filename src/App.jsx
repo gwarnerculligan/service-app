@@ -9,18 +9,18 @@ import {
 // --- SECURE API KEY SETUP ---
 // (Note: For the preview window here, it's set to "", but in StackBlitz use import.meta.env.VITE_GEMINI_API_KEY)
 const apiKey = "";
-
+import.meta.env.VITE_GEMINI_API_KEY;
 // ============================================================================
 // 🚨 ACTION REQUIRED: REPLACE THESE DUMMY KEYS WITH YOUR REAL FIREBASE KEYS 🚨
 // ============================================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyDb7Gc5_bycttH0h77Z9xK4Xv4XOpUO0nc", // Replace me!
-  authDomain: "serviceapp-94935.firebaseapp.com",     // Replace me!
-  projectId: "serviceapp-94935",                      // Replace me!
-  storageBucket: "serviceapp-94935.firebasestorage.app", // Replace me!
-  messagingSenderId: "1023263281742",                 // Replace me!
-  appId: "1:1023263281742:web:ad61e0af399cf9c2b5a91f", // Replace me!
-  measurementId: "G-BBR2KL3Y2J"                       // Replace me!
+  apiKey: "AIzaSyDb7Gc5_bycttH0h77Z9xK4Xv4XOpU00nc",
+  authDomain: "serviceapp-94935.firebaseapp.com",
+  projectId: "serviceapp-94935",
+  storageBucket: "serviceapp-94935.firebasestorage.app",
+  messagingSenderId: "1023263281742",
+  appId: "1:1023263281742:web:ad61e0af399cf9c2b5a91f",
+  measurementId: "G-BBR2KL3Y2J"
 };
 // ============================================================================
 

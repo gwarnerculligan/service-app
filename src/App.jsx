@@ -6,8 +6,8 @@ import {
   Truck, MapPin, AlertCircle, CheckCircle, Plus, LogOut, User, Briefcase, Clock, Users, Navigation, ExternalLink, Camera, FileText, X
 } from 'lucide-react';
 
-// --- IMPORTANT: Paste your Gemini API Key between the quotes below for the Camera to work on Vercel ---
-const apiKey = "";
+// --- API KEY INSERTED FROM YOUR SCREENSHOT ---
+const apiKey = "AIzaSyCTbgLjZw5PURGU8Kvq4E5G3Ubp2dAHpd8";
 
 // --- FIREBASE INITIALIZATION ---
 const firebaseConfig = {
@@ -129,7 +129,6 @@ export default function App() {
 
   return (
     <div className="font-sans">
-      {/* TONED BACK CSS: Solid dark slate instead of harsh black, better desktop width */}
       <style>{`
         :root, body, #root { 
           min-height: 100vh !important;
@@ -137,32 +136,27 @@ export default function App() {
           padding: 0 !important;
           background-color: #f1f5f9 !important; 
           text-align: left !important;
-          color: #0f172a !important; /* Soft Dark Slate */
+          color: #0f172a !important; 
         }
         
-        /* High Visibility Text */
         h1, h2, h3, h4, p, span, label, input, select, textarea, button, div { 
           color: #1e293b !important; 
-          font-weight: 500;
+          font-weight: 600;
         }
         
-        h1, h2, h3 { font-weight: 700 !important; color: #0f172a !important; }
+        h1, h2, h3 { font-weight: 800 !important; color: #0f172a !important; }
 
-        /* Maintain white for colored elements */
         .text-white, .text-white *, .bg-blue-600 *, .bg-blue-700 *, .bg-green-600 * { 
           color: #ffffff !important; 
         }
 
         select option { color: #000000 !important; background: #ffffff !important; }
 
-        /* Container centering for desktop */
         .app-width {
           width: 100%;
           max-width: 900px;
           margin: 0 auto;
         }
-
-        .hidden-input { display: none; }
       `}</style>
 
       {!appUser ? (
@@ -239,13 +233,13 @@ function Login({ onLogin }) {
         </div>
 
         <div className="space-y-2 mb-8 text-left">
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Select Your Name</label>
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Identity Selection</label>
           <select 
             className="w-full border-2 border-slate-200 p-4 rounded-xl focus:border-blue-600 outline-none bg-slate-50 cursor-pointer text-slate-900 font-bold text-lg appearance-none shadow-sm" 
             value={name} 
             onChange={e => setName(e.target.value)} 
           >
-            <option value="" disabled>Choose...</option>
+            <option value="" disabled>Choose name...</option>
             {currentNames.map(member => (
               <option key={member} value={member}>{member}</option>
             ))}
@@ -273,10 +267,7 @@ function ManagerView({ calls, user, db, appId }) {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file || !apiKey) {
-        if (!apiKey) setScanError("AI Key missing. Enter details manually.");
-        return;
-    }
+    if (!file) return;
     setIsScanning(true);
     setScanError('');
     try {
@@ -311,7 +302,7 @@ function ManagerView({ calls, user, db, appId }) {
         contents: [{
           role: "user",
           parts: [
-            { text: `Analyze this service call sheet. Extract: customer name, address, phone number, and special instructions. Map the address to the best matching area from this list: ${SERVICE_AREAS.join(', ')}. Return valid JSON only.` },
+            { text: `Analyze this service call sheet. Extract: customerName, address, phone, and notes (any special instructions). Map the address to the best matching area from this list: ${SERVICE_AREAS.join(', ')}. Return valid JSON only.` },
             { inlineData: { mimeType: file.type, data: base64Data } }
           ]
         }]
@@ -324,7 +315,6 @@ function ManagerView({ calls, user, db, appId }) {
 
       const textOutput = result.candidates?.[0]?.content?.parts?.[0]?.text;
       if (textOutput) {
-        // Clean up markdown wrapping if present
         const jsonStr = textOutput.replace(/```json|```/gi, '').trim();
         const data = JSON.parse(jsonStr);
         setForm(prev => ({
@@ -374,7 +364,7 @@ function ManagerView({ calls, user, db, appId }) {
       </div>
       
       {show && (
-        <form onSubmit={add} className="bg-white p-6 rounded-[2rem] shadow-xl border-2 border-slate-200 space-y-6 text-left animate-in fade-in slide-in-from-top-4">
+        <form onSubmit={add} className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border-2 border-slate-200 space-y-6 text-left animate-in fade-in slide-in-from-top-4">
           <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-inner">
             <div className="text-left w-full">
               <h3 className="font-bold text-blue-900 flex items-center uppercase text-sm tracking-widest"><Camera size={18} className="mr-3" /> Camera Fill</h3>
@@ -392,7 +382,7 @@ function ManagerView({ calls, user, db, appId }) {
           <div className="grid gap-6">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Customer Name</label>
-              <input placeholder="Name..." className="w-full border-2 border-slate-200 p-4 rounded-xl text-slate-900 font-bold text-base bg-slate-50 focus:border-blue-500 focus:bg-white outline-none" required value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} />
+              <input placeholder="Name..." className="w-full border-2 border-slate-200 p-4 rounded-xl text-slate-900 font-bold text-base bg-slate-50 focus:border-blue-600 focus:bg-white outline-none" required value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>

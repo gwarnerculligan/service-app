@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, doc, onSnapshot, updateDoc, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, doc, onSnapshot, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { 
-  Truck, MapPin, AlertCircle, CheckCircle, Plus, LogOut, User, Briefcase, Clock, Users, Navigation, ExternalLink, Camera, FileText, X
+  Truck, MapPin, AlertCircle, CheckCircle, Plus, LogOut, User, Briefcase, Clock, Users, Navigation, ExternalLink, Camera, FileText, X, Trash2
 } from 'lucide-react';
 
 // --- SECURE API KEY SETUP ---
-// IMPORTANT: When pasting into StackBlitz, change the line below to: const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+// This uses a safe check to pull the key from your Vercel Environment Variables (Vault)
+const apiKey = (typeof import.meta !== 'undefined' && import.meta.env) 
+  ? import.meta.env.VITE_GEMINI_API_KEY 
+  : "";
 
-// ============================================================================
-// 🚨 FIREBASE CONFIGURATION (REAL KEYS INTEGRATED) 🚨
-// ============================================================================
+// --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
   apiKey: "AIzaSyDb7Gc5_bycttH0h77Z9xK4Xv4XOpU00nc",
   authDomain: "serviceapp-94935.firebaseapp.com",
@@ -22,7 +22,6 @@ const firebaseConfig = {
   appId: "1:1023263281742:web:ad61e0af399cf9c2b5a91f",
   measurementId: "G-BBR2KL3Y2J"
 };
-// ============================================================================
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -163,8 +162,6 @@ export default function App() {
           max-width: 900px;
           margin: 0 auto;
         }
-
-        .hidden { display: none; }
       `}</style>
 
       {!appUser ? (
@@ -272,6 +269,17 @@ function ManagerView({ calls, user, db, appId }) {
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState('');
   const [viewImage, setViewImage] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'serviceCalls', id));
+      setConfirmDelete(null);
+    } catch (err) {
+      console.error("Delete Error:", err);
+      setScanError("Failed to delete call. Check permissions.");
+    }
+  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -453,7 +461,21 @@ function ManagerView({ calls, user, db, appId }) {
                 {areaCalls.map(c => (
                   <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-200 border-l-[8px] border-l-blue-600 shadow-sm flex flex-col md:flex-row justify-between items-start gap-4">
                     <div className="flex-1 w-full">
-                      <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">{c.customerName}</h3>
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">{c.customerName}</h3>
+                        <div className="flex items-center gap-2">
+                           {confirmDelete === c.id ? (
+                            <div className="flex items-center gap-2 animate-in fade-in zoom-in-95">
+                              <button onClick={() => handleDelete(c.id)} className="bg-red-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 border-none cursor-pointer">Confirm</button>
+                              <button onClick={() => setConfirmDelete(null)} className="bg-slate-200 text-slate-600 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-300 border-none cursor-pointer">Cancel</button>
+                            </div>
+                           ) : (
+                            <button onClick={() => setConfirmDelete(c.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors border-none bg-transparent cursor-pointer">
+                              <Trash2 size={18} />
+                            </button>
+                           )}
+                        </div>
+                      </div>
                       <div className="text-sm font-bold text-slate-600 mt-2 space-y-1">
                         <p className="flex items-start"><MapPin size={16} className="mr-2 mt-0.5 text-blue-500 shrink-0"/> {c.address}</p>
                         {c.phone && <p className="text-blue-600">📞 <span className="ml-2">{c.phone}</span></p>}
@@ -500,7 +522,6 @@ function DriverView({ calls, user, db, appId, setLoc }) {
   const [tab, setTab] = useState('open');
   const [viewImage, setViewImage] = useState(null);
   
-  // Splitting out the specific job states
   const available = calls.filter(c => c.status === 'open');
   const myOpen = calls.filter(c => c.claimedBy === user && c.status === 'claimed');
   const myFinished = calls.filter(c => c.claimedBy === user && c.status === 'completed');
@@ -542,7 +563,6 @@ function DriverView({ calls, user, db, appId, setLoc }) {
       </div>
       
       <div className="space-y-8 text-left w-full">
-        {/* TAB 1: THE BOARD */}
         {tab === 'open' && (
           available.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">The Board is Clear</div> :
           Object.entries(groupCallsByArea(available)).map(([area, areaCalls]) => (
@@ -572,7 +592,6 @@ function DriverView({ calls, user, db, appId, setLoc }) {
           ))
         )}
         
-        {/* TAB 2: MY OPEN JOBS */}
         {tab === 'myOpen' && (
           myOpen.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No Open Jobs</div> :
           myOpen.map(c => (
@@ -592,7 +611,6 @@ function DriverView({ calls, user, db, appId, setLoc }) {
           ))
         )}
 
-        {/* TAB 3: MY FINISHED JOBS */}
         {tab === 'myFinished' && (
           myFinished.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No Finished Jobs</div> :
           myFinished.map(c => (
@@ -600,14 +618,13 @@ function DriverView({ calls, user, db, appId, setLoc }) {
               <div className="bg-slate-100 text-slate-600 font-bold uppercase tracking-widest text-[10px] inline-block px-4 py-2 rounded-lg mb-6 border-2 border-slate-200 shadow-sm">Past Job</div>
               <h3 className="font-bold text-3xl text-slate-900 mb-4 uppercase tracking-tighter leading-none">{c.customerName}</h3>
               <div className="space-y-5 mb-8 font-bold">
-                <p className="flex items-start text-slate-600 text-lg leading-snug"><MapPin size={24} className="mr-4 mt-1 text-slate-400 shrink-0"/> <span>{c.address} <span className="text-slate-500 ml-2 opacity-80">({c.area})</span></span></p>
+                <p className="flex items-start text-slate-600 text-lg leading-snug"><MapPin size={24} className="mr-4 mt-1 text-slate-400 shrink-0"/> <span>{c.address} <span className="text-blue-600 ml-2 opacity-80">({c.area})</span></span></p>
               </div>
               <div className="text-center text-green-800 font-bold bg-green-100 py-6 rounded-2xl border-4 border-green-300 uppercase tracking-widest text-xl shadow-inner">Job Complete ✓</div>
             </div>
           ))
         )}
         
-        {/* TAB 4: TEAM */}
         {tab === 'team' && (
           team.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No one else is working</div> :
           <div className="grid gap-4 w-full px-2">
@@ -629,9 +646,9 @@ function DriverView({ calls, user, db, appId, setLoc }) {
 
       {viewImage && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4" onClick={() => setViewImage(null)}>
-          <div className="relative max-w-5xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-2 border-none cursor-pointer"><X size={40} /></button>
-            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-2xl bg-white shadow-2xl border-4 border-white" />
+          <div className="relative max-w-6xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-4 transition-colors border-none cursor-pointer"><X size={48} /></button>
+            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-3xl bg-white shadow-2xl border-[16px] border-white" />
           </div>
         </div>
       )}

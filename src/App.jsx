@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 
 // --- SECURE API KEY SETUP ---
-// This pulls the Gemini key from your Vercel Environment Variables (Vault)
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+// IMPORTANT: When pasting into StackBlitz, change the line below to: const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const apiKey = "";
 
 // ============================================================================
 // 🚨 FIREBASE CONFIGURATION (REAL KEYS INTEGRATED) 🚨
@@ -499,8 +499,11 @@ function ManagerView({ calls, user, db, appId }) {
 function DriverView({ calls, user, db, appId, setLoc }) {
   const [tab, setTab] = useState('open');
   const [viewImage, setViewImage] = useState(null);
+  
+  // Splitting out the specific job states
   const available = calls.filter(c => c.status === 'open');
-  const mine = calls.filter(c => c.claimedBy === user);
+  const myOpen = calls.filter(c => c.claimedBy === user && c.status === 'claimed');
+  const myFinished = calls.filter(c => c.claimedBy === user && c.status === 'completed');
   const team = calls.filter(c => c.status === 'claimed' && c.claimedBy !== user);
 
   const update = async (id, status, locKey) => {
@@ -508,7 +511,8 @@ function DriverView({ calls, user, db, appId, setLoc }) {
     const location = await getCurrentLocation();
     try {
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'serviceCalls', id), { status, claimedBy: user, [locKey]: location });
-      if (status === 'claimed') setTab('mine');
+      if (status === 'claimed') setTab('myOpen');
+      if (status === 'completed') setTab('myFinished');
     } catch (err) {
       console.error(err);
     } finally {
@@ -516,17 +520,29 @@ function DriverView({ calls, user, db, appId, setLoc }) {
     }
   };
 
+  const tabs = [
+    { id: 'open', label: `Board (${available.length})` },
+    { id: 'myOpen', label: `My Open Jobs` },
+    { id: 'myFinished', label: `My Finished Jobs` },
+    { id: 'team', label: `Team` }
+  ];
+
   return (
     <div className="space-y-6 w-full text-left">
-      <div className="flex bg-white rounded-2xl p-2 border-2 border-slate-200 shadow-sm sticky top-16 z-10 w-full">
-        {['open', 'mine', 'team'].map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`flex-1 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border-none cursor-pointer ${tab === t ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>
-            {t === 'open' ? `Board (${available.length})` : t === 'mine' ? 'My Jobs' : 'Team'}
+      <div className="flex bg-white rounded-2xl p-1 sm:p-2 border-2 border-slate-200 shadow-sm sticky top-16 z-10 w-full overflow-x-auto gap-1">
+        {tabs.map((t) => (
+          <button 
+            key={t.id} 
+            onClick={() => setTab(t.id)} 
+            className={`flex-1 min-w-max px-3 py-3.5 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all border-none cursor-pointer whitespace-nowrap ${tab === t.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}
+          >
+            {t.label}
           </button>
         ))}
       </div>
       
       <div className="space-y-8 text-left w-full">
+        {/* TAB 1: THE BOARD */}
         {tab === 'open' && (
           available.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">The Board is Clear</div> :
           Object.entries(groupCallsByArea(available)).map(([area, areaCalls]) => (
@@ -556,9 +572,10 @@ function DriverView({ calls, user, db, appId, setLoc }) {
           ))
         )}
         
-        {tab === 'mine' && (
-          mine.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No Jobs Claimed</div> :
-          mine.map(c => (
+        {/* TAB 2: MY OPEN JOBS */}
+        {tab === 'myOpen' && (
+          myOpen.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No Open Jobs</div> :
+          myOpen.map(c => (
             <div key={c.id} className="bg-white p-6 md:p-8 rounded-[2rem] border-[6px] border-blue-600 shadow-xl w-full">
               <div className="bg-blue-100 text-blue-800 font-bold uppercase tracking-widest text-[10px] inline-block px-4 py-2 rounded-lg mb-6 border-2 border-blue-200 shadow-sm">Your Current Job</div>
               <h3 className="font-bold text-3xl text-slate-900 mb-4 uppercase tracking-tighter leading-none">{c.customerName}</h3>
@@ -570,15 +587,27 @@ function DriverView({ calls, user, db, appId, setLoc }) {
                   {c.notes}
                 </div>}
               </div>
-              {c.status === 'claimed' ? (
-                <button onClick={() => update(c.id, 'completed', 'completedAtLoc')} className="w-full bg-green-600 text-white py-6 rounded-2xl font-bold text-2xl hover:bg-green-700 shadow-lg uppercase tracking-widest active:scale-95 transition-all border-none cursor-pointer">Finish Job</button>
-              ) : (
-                <div className="text-center text-green-800 font-bold bg-green-100 py-6 rounded-2xl border-4 border-green-300 uppercase tracking-widest text-xl shadow-inner">Job Complete ✓</div>
-              )}
+              <button onClick={() => update(c.id, 'completed', 'completedAtLoc')} className="w-full bg-green-600 text-white py-6 rounded-2xl font-bold text-2xl hover:bg-green-700 shadow-lg uppercase tracking-widest active:scale-95 transition-all border-none cursor-pointer">Finish Job</button>
+            </div>
+          ))
+        )}
+
+        {/* TAB 3: MY FINISHED JOBS */}
+        {tab === 'myFinished' && (
+          myFinished.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No Finished Jobs</div> :
+          myFinished.map(c => (
+            <div key={c.id} className="bg-white p-6 md:p-8 rounded-[2rem] border-4 border-slate-200 shadow-md w-full opacity-70 hover:opacity-100 transition-opacity">
+              <div className="bg-slate-100 text-slate-600 font-bold uppercase tracking-widest text-[10px] inline-block px-4 py-2 rounded-lg mb-6 border-2 border-slate-200 shadow-sm">Past Job</div>
+              <h3 className="font-bold text-3xl text-slate-900 mb-4 uppercase tracking-tighter leading-none">{c.customerName}</h3>
+              <div className="space-y-5 mb-8 font-bold">
+                <p className="flex items-start text-slate-600 text-lg leading-snug"><MapPin size={24} className="mr-4 mt-1 text-slate-400 shrink-0"/> <span>{c.address} <span className="text-slate-500 ml-2 opacity-80">({c.area})</span></span></p>
+              </div>
+              <div className="text-center text-green-800 font-bold bg-green-100 py-6 rounded-2xl border-4 border-green-300 uppercase tracking-widest text-xl shadow-inner">Job Complete ✓</div>
             </div>
           ))
         )}
         
+        {/* TAB 4: TEAM */}
         {tab === 'team' && (
           team.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No one else is working</div> :
           <div className="grid gap-4 w-full px-2">

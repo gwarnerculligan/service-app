@@ -6,8 +6,9 @@ import {
   Truck, MapPin, AlertCircle, CheckCircle, Plus, LogOut, User, Briefcase, Clock, Users, Navigation, ExternalLink, Camera, FileText, X
 } from 'lucide-react';
 
-// --- YOUR GEMINI API KEY ---
-const apiKey = "AIzaSyCTbgLjZw5PURGU8Kvq4E5G3Ubp2dAHpd8";
+// --- SECURE API KEY SETUP ---
+// (Note: For the preview window here, it's set to "", but in StackBlitz use import.meta.env.VITE_GEMINI_API_KEY)
+const apiKey = "";
 
 // ============================================================================
 // 🚨 ACTION REQUIRED: REPLACE THESE DUMMY KEYS WITH YOUR REAL FIREBASE KEYS 🚨
@@ -277,11 +278,6 @@ function ManagerView({ calls, user, db, appId }) {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    if (!apiKey || apiKey === "") {
-        setScanError("API Key hidden vault missing. Please add VITE_GEMINI_API_KEY in Vercel Settings.");
-        return;
-    }
 
     setIsScanning(true);
     setScanError('');

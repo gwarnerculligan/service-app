@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 // --- API KEY INTEGRATED ---
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const apiKey = "AIzaSyCTbgLjZw5PURGU8Kvq4E5G3Ubp2dAHpd8";
 
 // --- FIREBASE INITIALIZATION ---
 const firebaseConfig = {
@@ -294,14 +294,14 @@ function ManagerView({ calls, user, db, appId }) {
               const canvas = document.createElement('canvas');
               let width = img.width;
               let height = img.height;
-              const MAX_DIM = 1200;
+              const MAX_DIM = 800; // Reduced to stay safely under Firebase 1MB limit
               if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; } 
               else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
               canvas.width = width;
               canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+              resolve(canvas.toDataURL('image/jpeg', 0.6)); // Compress slightly more for faster syncing
             };
           };
         });
@@ -374,7 +374,8 @@ function ManagerView({ calls, user, db, appId }) {
       setShow(false);
       setForm({ customerName: '', address: '', phone: '', notes: '', urgency: 'Medium', imageUri: '', area: '' });
     } catch (err) {
-      setScanError("Save failed. Check connection.");
+      console.error("Firestore Save Error:", err);
+      setScanError(`Save failed: ${err.message}. Check Firebase rules.`);
     }
   };
 

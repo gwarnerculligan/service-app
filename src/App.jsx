@@ -6,6 +6,7 @@ import {
   Truck, MapPin, AlertCircle, CheckCircle, Plus, LogOut, User, Briefcase, Clock, Users, Navigation, ExternalLink, Camera, FileText, X
 } from 'lucide-react';
 
+// --- IMPORTANT: Paste your Gemini API Key between the quotes below for the Camera to work on Vercel ---
 const apiKey = "";
 
 // --- FIREBASE INITIALIZATION ---
@@ -128,7 +129,7 @@ export default function App() {
 
   return (
     <div className="font-sans">
-      {/* FINAL CSS FIX: Full width on mobile, balanced on desktop, solid black font */}
+      {/* TONED BACK CSS: Solid dark slate instead of harsh black, better desktop width */}
       <style>{`
         :root, body, #root { 
           min-height: 100vh !important;
@@ -136,36 +137,32 @@ export default function App() {
           padding: 0 !important;
           background-color: #f1f5f9 !important; 
           text-align: left !important;
-          overflow-x: hidden;
+          color: #0f172a !important; /* Soft Dark Slate */
         }
         
-        /* Force solid black text everywhere */
+        /* High Visibility Text */
         h1, h2, h3, h4, p, span, label, input, select, textarea, button, div { 
-          color: #000000 !important; 
-          opacity: 1 !important; 
-          font-weight: 600;
+          color: #1e293b !important; 
+          font-weight: 500;
         }
         
-        /* High contrast for headings */
-        h1, h2, h3 { font-weight: 800 !important; }
+        h1, h2, h3 { font-weight: 700 !important; color: #0f172a !important; }
 
-        /* White text for elements inside blue/green backgrounds */
-        .text-white, .text-white *, .bg-blue-600 *, .bg-blue-700 *, .bg-green-600 *, .bg-slate-900 * { 
+        /* Maintain white for colored elements */
+        .text-white, .text-white *, .bg-blue-600 *, .bg-blue-700 *, .bg-green-600 * { 
           color: #ffffff !important; 
         }
 
-        select option { 
-          color: #000000 !important; 
-          background: #ffffff !important;
+        select option { color: #000000 !important; background: #ffffff !important; }
+
+        /* Container centering for desktop */
+        .app-width {
+          width: 100%;
+          max-width: 900px;
+          margin: 0 auto;
         }
 
-        /* Responsive Container */
-        .main-container {
-          width: 100%;
-          max-width: 1024px;
-          margin-left: auto;
-          margin-right: auto;
-        }
+        .hidden-input { display: none; }
       `}</style>
 
       {!appUser ? (
@@ -173,15 +170,15 @@ export default function App() {
       ) : (
         <div className="min-h-screen bg-slate-100 pb-10 w-full">
           {isLocating && (
-            <div className="fixed inset-0 bg-white/90 flex items-center justify-center z-50 font-black text-blue-600 text-xl">
+            <div className="fixed inset-0 bg-white/90 flex items-center justify-center z-50 font-bold text-blue-600 text-lg">
               Updating GPS...
             </div>
           )}
-          <nav className="bg-blue-700 p-4 shadow-lg sticky top-0 z-10 flex justify-between items-center w-full border-none">
-            <div className="main-container flex justify-between items-center px-4 w-full">
+          <nav className="bg-blue-700 p-4 shadow-md sticky top-0 z-10 w-full border-none">
+            <div className="app-width flex justify-between items-center px-4">
               <div className="flex items-center space-x-2">
                 <Truck className="text-white" size={24} /> 
-                <span className="font-black text-xl text-white tracking-tight">ServiceApp</span>
+                <span className="font-bold text-xl text-white tracking-tight">ServiceApp</span>
               </div>
               <div className="flex items-center space-x-3 text-sm font-bold">
                 <span className="hidden sm:inline text-white bg-blue-800 px-3 py-1 rounded-md">{appUser.name}</span>
@@ -192,7 +189,7 @@ export default function App() {
             </div>
           </nav>
 
-          <main className="main-container p-4 md:p-6">
+          <main className="app-width p-4 md:p-6">
             {appUser.role === 'Office Staff' ? (
               <ManagerView calls={serviceCalls} user={appUser.name} db={db} appId={appId} />
             ) : (
@@ -208,7 +205,6 @@ export default function App() {
 function Login({ onLogin }) {
   const [name, setName] = useState('');
   const [role, setRole] = useState('Driver');
-  
   const DRIVERS = ["Chris", "Elijah", "Eric", "Garrett", "Jeremy", "Lynwood"];
   const OFFICE_STAFF = ["Brooke", "Garrett", "Hailee", "Jenna", "Kelly", "Logan"];
 
@@ -221,35 +217,35 @@ function Login({ onLogin }) {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-200 p-4">
-      <div className="bg-white p-8 md:p-10 rounded-3xl shadow-2xl w-full max-w-lg border-4 border-white">
-        <div className="flex justify-center mb-6 text-blue-600"><Truck size={64}/></div>
-        <h1 className="text-3xl font-black text-center mb-8 text-black uppercase tracking-tighter">ServiceApp Access</h1>
+      <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl w-full max-w-md border-2 border-white">
+        <div className="flex justify-center mb-4 text-blue-600"><Truck size={56}/></div>
+        <h1 className="text-3xl font-bold text-center mb-8 text-slate-900 uppercase tracking-tight">Access Portal</h1>
         
         <div className="grid grid-cols-2 gap-4 mb-8">
           <button 
             onClick={() => handleRoleChange('Driver')} 
-            className={`p-4 rounded-2xl border-4 flex flex-col items-center transition-all cursor-pointer ${role === 'Driver' ? 'bg-blue-600 border-blue-600 shadow-xl scale-105' : 'bg-slate-50 border-slate-300 hover:border-blue-400'}`}
+            className={`p-4 rounded-2xl border-2 flex flex-col items-center transition-all cursor-pointer ${role === 'Driver' ? 'bg-blue-600 border-blue-600 shadow-md scale-105' : 'bg-slate-50 border-slate-200 hover:border-blue-400'}`}
           >
-            <Briefcase size={28} className={role === 'Driver' ? 'text-white' : 'text-slate-500'}/>
-            <span className={`text-sm mt-2 font-black uppercase ${role === 'Driver' ? 'text-white' : 'text-black'}`}>Driver</span>
+            <Briefcase size={24} className={role === 'Driver' ? 'text-white' : 'text-slate-400'}/>
+            <span className={`text-xs mt-2 font-bold uppercase ${role === 'Driver' ? 'text-white' : 'text-slate-600'}`}>Driver</span>
           </button>
           <button 
             onClick={() => handleRoleChange('Office Staff')} 
-            className={`p-4 rounded-2xl border-4 flex flex-col items-center transition-all cursor-pointer ${role === 'Office Staff' ? 'bg-blue-600 border-blue-600 shadow-xl scale-105' : 'bg-slate-50 border-slate-300 hover:border-blue-400'}`}
+            className={`p-4 rounded-2xl border-2 flex flex-col items-center transition-all cursor-pointer ${role === 'Office Staff' ? 'bg-blue-600 border-blue-600 shadow-md scale-105' : 'bg-slate-50 border-slate-200 hover:border-blue-400'}`}
           >
-            <User size={28} className={role === 'Office Staff' ? 'text-white' : 'text-slate-500'}/>
-            <span className={`text-sm mt-2 font-black uppercase ${role === 'Office Staff' ? 'text-white' : 'text-black'}`}>Office Staff</span>
+            <User size={24} className={role === 'Office Staff' ? 'text-white' : 'text-slate-400'}/>
+            <span className={`text-xs mt-2 font-bold uppercase ${role === 'Office Staff' ? 'text-white' : 'text-slate-600'}`}>Office</span>
           </button>
         </div>
 
         <div className="space-y-2 mb-8 text-left">
-          <label className="block text-xs font-black text-black uppercase tracking-widest ml-1 font-black">Identity Selection</label>
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Select Your Name</label>
           <select 
-            className="w-full border-4 border-slate-300 p-5 rounded-2xl focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none bg-slate-50 cursor-pointer text-black font-black text-lg appearance-none shadow-inner" 
+            className="w-full border-2 border-slate-200 p-4 rounded-xl focus:border-blue-600 outline-none bg-slate-50 cursor-pointer text-slate-900 font-bold text-lg appearance-none shadow-sm" 
             value={name} 
             onChange={e => setName(e.target.value)} 
           >
-            <option value="" disabled>Choose your name...</option>
+            <option value="" disabled>Choose...</option>
             {currentNames.map(member => (
               <option key={member} value={member}>{member}</option>
             ))}
@@ -258,10 +254,10 @@ function Login({ onLogin }) {
 
         <button 
           onClick={() => name && onLogin(name, role)} 
-          className="w-full bg-blue-600 text-white py-5 rounded-xl font-black text-xl hover:bg-blue-700 disabled:opacity-40 transition-all shadow-xl active:scale-95 uppercase tracking-wider border-none cursor-pointer"
+          className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-blue-700 disabled:opacity-40 transition-all active:scale-95 uppercase tracking-wider border-none cursor-pointer"
           disabled={!name}
         >
-          Launch System
+          Enter App
         </button>
       </div>
     </div>
@@ -277,7 +273,10 @@ function ManagerView({ calls, user, db, appId }) {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file || !apiKey) {
+        if (!apiKey) setScanError("AI Key missing. Enter details manually.");
+        return;
+    }
     setIsScanning(true);
     setScanError('');
     try {
@@ -293,13 +292,8 @@ function ManagerView({ calls, user, db, appId }) {
               let width = img.width;
               let height = img.height;
               const MAX_DIM = 1200;
-              if (width > height && width > MAX_DIM) {
-                height *= MAX_DIM / width;
-                width = MAX_DIM;
-              } else if (height > MAX_DIM) {
-                width *= MAX_DIM / height;
-                height = MAX_DIM;
-              }
+              if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; } 
+              else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
               canvas.width = width;
               canvas.height = height;
               const ctx = canvas.getContext('2d');
@@ -317,51 +311,34 @@ function ManagerView({ calls, user, db, appId }) {
         contents: [{
           role: "user",
           parts: [
-            { text: `Extract service info. Areas: ${SERVICE_AREAS.join(', ')}.` },
+            { text: `Analyze this service call sheet. Extract: customer name, address, phone number, and special instructions. Map the address to the best matching area from this list: ${SERVICE_AREAS.join(', ')}. Return valid JSON only.` },
             { inlineData: { mimeType: file.type, data: base64Data } }
           ]
-        }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              customerName: { type: "STRING" },
-              address: { type: "STRING" },
-              phone: { type: "STRING" },
-              notes: { type: "STRING" },
-              urgency: { type: "STRING" },
-              area: { type: "STRING" }
-            }
-          }
-        }
+        }]
       };
 
       const result = await fetchWithRetry(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
       );
 
       const textOutput = result.candidates?.[0]?.content?.parts?.[0]?.text;
       if (textOutput) {
-        const data = JSON.parse(textOutput);
+        // Clean up markdown wrapping if present
+        const jsonStr = textOutput.replace(/```json|```/gi, '').trim();
+        const data = JSON.parse(jsonStr);
         setForm(prev => ({
           ...prev,
-          customerName: data.customerName || prev.customerName,
-          address: data.address || prev.address,
-          phone: data.phone || prev.phone,
-          notes: data.notes || prev.notes,
-          urgency: data.urgency || prev.urgency,
-          area: SERVICE_AREAS.includes(data.area) ? data.area : prev.area,
+          customerName: data.customerName || '',
+          address: data.address || '',
+          phone: data.phone || '',
+          notes: data.notes || data.instructions || '',
+          area: SERVICE_AREAS.includes(data.area) ? data.area : '',
           imageUri: compressedDataUrl
         }));
       }
     } catch (err) {
-      setScanError("Scan failed.");
+      setScanError("AI couldn't read the sheet. Please enter manually.");
     } finally {
       setIsScanning(false);
     }
@@ -370,126 +347,115 @@ function ManagerView({ calls, user, db, appId }) {
   const add = async (e) => {
     e.preventDefault();
     if (!form.customerName || !form.address || !form.area) {
-      setScanError("Fill all required fields.");
+      setScanError("Fill out Name, Area, and Address.");
       return;
     }
     try {
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'serviceCalls'), { 
-        ...form, 
-        status: 'open', 
-        createdAt: Date.now(), 
-        createdBy: user,
-        claimedBy: null
+        ...form, status: 'open', createdAt: Date.now(), createdBy: user, claimedBy: null
       });
       setShow(false);
       setForm({ customerName: '', address: '', phone: '', notes: '', urgency: 'Medium', imageUri: '', area: '' });
     } catch (err) {
-      setScanError("Failed to save.");
+      setScanError("Save failed.");
     }
   };
 
   return (
     <div className="space-y-6 w-full">
-      <div className="flex justify-between items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border-2 border-slate-200">
-        <h2 className="text-2xl font-black text-black uppercase tracking-tight">Active Queue</h2>
+      <div className="flex justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <h2 className="text-xl font-bold text-slate-800 uppercase tracking-tight ml-2">Service Queue</h2>
         <button 
           onClick={() => setShow(!show)} 
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center justify-center space-x-2 hover:bg-blue-700 transition-all shadow-lg font-black uppercase text-sm border-none cursor-pointer"
+          className="bg-blue-600 text-white px-5 py-2.5 rounded-xl flex items-center justify-center space-x-2 hover:bg-blue-700 transition-all shadow-md font-bold uppercase text-sm border-none cursor-pointer"
         >
-          {show ? <span>Cancel Form</span> : <><Plus size={20}/> <span>Add New Job</span></>}
+          {show ? <span>Cancel</span> : <><Plus size={18}/> <span>New Job</span></>}
         </button>
       </div>
       
       {show && (
-        <form onSubmit={add} className="bg-white p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-slate-300 space-y-6 text-left animate-in fade-in slide-in-from-top-4">
-          <div className="bg-blue-50 border-4 border-blue-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-inner">
+        <form onSubmit={add} className="bg-white p-6 rounded-[2rem] shadow-xl border-2 border-slate-200 space-y-6 text-left animate-in fade-in slide-in-from-top-4">
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-inner">
             <div className="text-left w-full">
-              <h3 className="font-black text-blue-900 flex items-center uppercase text-sm tracking-widest"><Camera size={20} className="mr-3" /> Camera Auto-Fill</h3>
-              <p className="text-xs text-blue-800 mt-1 font-black opacity-80">Take a photo of a call sheet to auto-fill the form.</p>
+              <h3 className="font-bold text-blue-900 flex items-center uppercase text-sm tracking-widest"><Camera size={18} className="mr-3" /> Camera Fill</h3>
+              <p className="text-xs text-blue-800 mt-1 font-bold opacity-70">Snap a photo to fill the form automatically.</p>
             </div>
-            {/* Redesigned Button that hides messy Choose File text */}
             <div className="w-full sm:w-auto shrink-0">
-              <label className="block bg-blue-600 text-white px-8 py-4 rounded-xl font-black text-lg uppercase hover:bg-blue-700 shadow-xl cursor-pointer text-center active:scale-95 transition-all">
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleImageUpload} 
-                  disabled={isScanning} 
-                  capture="environment" 
-                  className="hidden" 
-                />
+               <label className="block bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-sm uppercase hover:bg-blue-700 shadow-md cursor-pointer text-center active:scale-95 transition-all">
+                <input type="file" accept="image/*" onChange={handleImageUpload} disabled={isScanning} capture="environment" className="hidden" />
                 {isScanning ? "Processing..." : "Open Camera"}
               </label>
             </div>
           </div>
+          {scanError && <div className="p-3 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-100">{scanError}</div>}
 
           <div className="grid gap-6">
             <div>
-              <label className="block text-xs font-black text-black uppercase tracking-widest mb-2 ml-1">Customer Name</label>
-              <input placeholder="Name..." className="w-full border-4 border-slate-300 p-4 rounded-xl text-black font-black text-lg bg-slate-50 focus:border-blue-600 focus:bg-white outline-none" required value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} />
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Customer Name</label>
+              <input placeholder="Name..." className="w-full border-2 border-slate-200 p-4 rounded-xl text-slate-900 font-bold text-base bg-slate-50 focus:border-blue-500 focus:bg-white outline-none" required value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} />
             </div>
-            <div className="grid sm:grid-cols-2 gap-6">
+            <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-widest mb-2 ml-1">Service Area</label>
-                <select className="w-full border-4 border-slate-300 p-4 rounded-xl text-black font-black text-lg bg-slate-50 outline-none focus:border-blue-600 focus:bg-white appearance-none transition-all cursor-pointer" required value={form.area} onChange={e => setForm({...form, area: e.target.value})} >
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Area</label>
+                <select className="w-full border-2 border-slate-200 p-4 rounded-xl text-slate-900 font-bold text-base bg-slate-50 outline-none focus:border-blue-600 focus:bg-white appearance-none transition-all cursor-pointer" required value={form.area} onChange={e => setForm({...form, area: e.target.value})} >
                   <option value="" disabled>Select area...</option>
                   {SERVICE_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-black text-black uppercase tracking-widest mb-2 ml-1">Phone Number</label>
-                <input placeholder="Phone..." className="w-full border-4 border-slate-300 p-4 rounded-xl text-black font-black text-lg bg-slate-50 focus:border-blue-600 focus:bg-white outline-none" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Phone</label>
+                <input placeholder="Phone..." className="w-full border-2 border-slate-200 p-4 rounded-xl text-slate-900 font-bold text-base bg-slate-50 focus:border-blue-600 focus:bg-white outline-none" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-black text-black uppercase tracking-widest mb-2 ml-1">Job Address</label>
-              <input placeholder="Full address..." className="w-full border-4 border-slate-300 p-4 rounded-xl text-black font-black text-lg bg-slate-50 focus:border-blue-600 focus:bg-white outline-none" required value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Address</label>
+              <input placeholder="Address..." className="w-full border-2 border-slate-200 p-4 rounded-xl text-slate-900 font-bold text-base bg-slate-50 focus:border-blue-600 focus:bg-white outline-none" required value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
             </div>
             <div>
-              <label className="block text-xs font-black text-black uppercase tracking-widest mb-2 ml-1">Special Instructions</label>
-              <textarea placeholder="Instructions..." rows={3} className="w-full border-4 border-slate-300 p-4 rounded-xl text-black font-black text-lg bg-slate-50 focus:border-blue-600 focus:bg-white outline-none resize-none" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Notes</label>
+              <textarea placeholder="Instructions..." rows={3} className="w-full border-2 border-slate-200 p-4 rounded-xl text-slate-900 font-bold text-base bg-slate-50 focus:border-blue-600 focus:bg-white outline-none resize-none" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
             </div>
           </div>
-          <button className="bg-green-600 text-white w-full py-5 rounded-xl font-black text-xl hover:bg-green-700 shadow-xl uppercase tracking-widest transition-all active:scale-95 border-none mt-4 cursor-pointer">Post Job to Drivers</button>
+          <button className="bg-green-600 text-white w-full py-5 rounded-2xl font-bold text-xl hover:bg-green-700 shadow-lg uppercase tracking-widest transition-all active:scale-95 border-none mt-4 cursor-pointer">Publish Job</button>
         </form>
       )}
 
-      <div className="space-y-8 text-left mt-8 w-full">
+      <div className="space-y-6 text-left mt-8 w-full">
         {calls.length === 0 ? (
-          <div className="text-center py-20 text-slate-500 font-black text-lg uppercase tracking-widest bg-white rounded-3xl border-4 border-dashed border-slate-300">The Board is Empty</div>
+          <div className="text-center py-20 text-slate-400 font-bold text-base uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No active service calls.</div>
         ) : (
           Object.entries(groupCallsByArea(calls)).map(([area, areaCalls]) => (
-            <div key={area} className="space-y-4">
-              <div className="flex items-center space-x-3 bg-slate-900 text-white px-5 py-2 rounded-xl shadow-lg w-fit border-none ml-2">
-                <MapPin size={18} className="text-white" /> 
-                <span className="font-black uppercase text-xs tracking-widest text-white">{area} ({areaCalls.length})</span>
+            <div key={area} className="space-y-3">
+              <div className="flex items-center space-x-2 bg-slate-800 text-white px-4 py-1.5 rounded-lg shadow-sm w-fit border-none ml-1">
+                <MapPin size={14} className="text-white" /> 
+                <span className="font-bold uppercase text-[10px] tracking-widest text-white">{area} ({areaCalls.length})</span>
               </div>
-              <div className="grid gap-6">
+              <div className="grid gap-4">
                 {areaCalls.map(c => (
-                  <div key={c.id} className="bg-white p-6 md:p-8 rounded-3xl border-4 border-slate-300 border-l-[12px] border-l-blue-600 shadow-lg flex flex-col md:flex-row justify-between items-start gap-6">
+                  <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-200 border-l-[8px] border-l-blue-600 shadow-sm flex flex-col md:flex-row justify-between items-start gap-4">
                     <div className="flex-1 w-full">
-                      <h3 className="text-3xl font-black text-black mb-3 uppercase tracking-tight">{c.customerName}</h3>
-                      <div className="space-y-2 mb-6 font-black text-lg">
-                        <p className="flex items-start text-black leading-snug"><MapPin size={24} className="mr-3 mt-1 text-blue-600 shrink-0"/> {c.address}</p>
-                        {c.phone && <p className="text-blue-700 text-2xl font-black">📞 <span className="ml-3">{c.phone}</span></p>}
+                      <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">{c.customerName}</h3>
+                      <div className="text-sm font-bold text-slate-600 mt-2 space-y-1">
+                        <p className="flex items-start"><MapPin size={16} className="mr-2 mt-0.5 text-blue-500 shrink-0"/> {c.address}</p>
+                        {c.phone && <p className="text-blue-600">📞 <span className="ml-2">{c.phone}</span></p>}
                       </div>
                       {c.notes && (
-                        <div className="bg-slate-50 p-6 rounded-2xl border-4 border-slate-200 mb-6 shadow-inner">
-                          <span className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-2 underline decoration-slate-300 decoration-2 underline-offset-4">Instructions</span>
-                          <p className="text-xl font-bold text-black leading-relaxed">{c.notes}</p>
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mt-4 text-sm font-medium text-slate-700 shadow-inner">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Notes:</span>
+                          {c.notes}
                         </div>
                       )}
-                      <div className="flex flex-wrap gap-4 items-center mt-6 pt-6 border-t-4 border-slate-100 font-black text-xs uppercase tracking-widest">
-                        {c.claimedAtLoc && <a href={`https://www.google.com/maps?q=${c.claimedAtLoc.lat},${c.claimedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-blue-700 flex items-center bg-blue-50 px-4 py-2 rounded-lg border-2 border-blue-200 hover:bg-blue-100">📍 Start Loc</a>}
-                        {c.completedAtLoc && <a href={`https://www.google.com/maps?q=${c.completedAtLoc.lat},${c.completedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-green-700 flex items-center bg-green-50 px-4 py-2 rounded-lg border-2 border-green-200 hover:bg-green-100">✅ End Loc</a>}
-                        {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="text-black flex items-center bg-slate-200 px-4 py-2 rounded-lg border-2 border-slate-300 hover:bg-slate-300 cursor-pointer border-none font-black uppercase text-xs">📄 View Sheet</button>}
+                      <div className="flex flex-wrap gap-4 items-center mt-4 pt-4 border-t border-slate-100 font-bold text-[10px] uppercase tracking-widest">
+                        {c.claimedAtLoc && <a href={`https://www.google.com/maps?q=${c.claimedAtLoc.lat},${c.claimedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-blue-500 flex items-center">📍 Claimed</a>}
+                        {c.completedAtLoc && <a href={`https://www.google.com/maps?q=${c.completedAtLoc.lat},${c.completedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-green-600 flex items-center">✅ Finished</a>}
+                        {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="text-slate-500 flex items-center bg-slate-100 px-3 py-1 rounded cursor-pointer border-none font-bold uppercase">📄 View Sheet</button>}
                       </div>
                     </div>
-                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-4 shrink-0 bg-slate-100 p-6 rounded-3xl border-4 border-slate-200">
-                      <span className={`text-xs uppercase font-black px-4 py-2 rounded-full border-4 shadow-md ${c.status === 'open' ? 'bg-white text-black border-slate-400' : c.status === 'completed' ? 'bg-green-100 text-green-900 border-green-600' : 'bg-blue-100 text-blue-900 border-blue-600'}`}>
+                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-3 shrink-0">
+                      <span className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border-2 ${c.status === 'open' ? 'bg-slate-50 text-slate-500 border-slate-200' : c.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
                         {c.status}
                       </span>
-                      <p className="text-lg font-black text-black flex items-center gap-3 uppercase bg-white px-3 py-1.5 rounded-xl shadow-sm border-2 border-slate-200"><User size={18} className="text-slate-400"/> {c.claimedBy || 'Open'}</p>
+                      <p className="text-xs font-bold text-slate-400 flex items-center gap-1 uppercase"><User size={14}/> {c.claimedBy || 'Unassigned'}</p>
                     </div>
                   </div>
                 ))}
@@ -502,8 +468,8 @@ function ManagerView({ calls, user, db, appId }) {
       {viewImage && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4" onClick={() => setViewImage(null)}>
           <div className="relative max-w-5xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-4 transition-colors border-none cursor-pointer"><X size={48} /></button>
-            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-3xl bg-white shadow-2xl border-8 border-white" />
+            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-2 border-none cursor-pointer"><X size={40} /></button>
+            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-2xl bg-white shadow-2xl border-4 border-white" />
           </div>
         </div>
       )}
@@ -532,39 +498,39 @@ function DriverView({ calls, user, db, appId, setLoc }) {
   };
 
   return (
-    <div className="space-y-8 w-full">
-      <div className="flex bg-white rounded-3xl p-3 border-4 border-slate-300 shadow-2xl sticky top-20 z-10 w-full">
+    <div className="space-y-6 w-full">
+      <div className="flex bg-white rounded-2xl p-2 border-2 border-slate-200 shadow-sm sticky top-16 z-10 w-full">
         {['open', 'mine', 'team'].map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`flex-1 py-5 rounded-2xl text-sm md:text-lg font-black uppercase tracking-widest transition-all border-none cursor-pointer ${tab === t ? 'bg-blue-600 text-white shadow-2xl scale-105' : 'text-slate-500 hover:bg-slate-100 hover:text-black'}`}>
+          <button key={t} onClick={() => setTab(t)} className={`flex-1 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border-none cursor-pointer ${tab === t ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>
             {t === 'open' ? `Board (${available.length})` : t === 'mine' ? 'My Jobs' : 'Team'}
           </button>
         ))}
       </div>
       
-      <div className="space-y-10 text-left w-full">
+      <div className="space-y-8 text-left w-full">
         {tab === 'open' && (
-          available.length === 0 ? <div className="text-center py-32 text-slate-500 font-black text-xl uppercase tracking-widest bg-white rounded-[2rem] border-8 border-dashed border-slate-200">The Board is Clear</div> :
+          available.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">The Board is Clear</div> :
           Object.entries(groupCallsByArea(available)).map(([area, areaCalls]) => (
-            <div key={area} className="space-y-5 w-full">
-              <div className="flex items-center space-x-3 bg-slate-900 text-white px-6 py-2 rounded-2xl shadow-xl w-fit border-none ml-2">
-                <MapPin size={22} className="text-white" /> 
-                <span className="font-black uppercase text-base tracking-widest text-white">{area}</span>
+            <div key={area} className="space-y-4 w-full">
+              <div className="flex items-center space-x-2 bg-slate-800 text-white px-4 py-1.5 rounded-lg shadow-sm w-fit border-none ml-1">
+                <MapPin size={16} className="text-white" /> 
+                <span className="font-bold uppercase text-[10px] tracking-widest text-white">{area}</span>
               </div>
               {areaCalls.map(c => (
-                <div key={c.id} className="bg-white p-6 md:p-10 rounded-[2rem] border-[4px] border-slate-300 shadow-2xl animate-in fade-in slide-in-from-bottom-4 w-full">
-                  <h3 className="font-black text-4xl md:text-5xl text-black mb-6 uppercase tracking-tighter leading-none">{c.customerName}</h3>
-                  <div className="space-y-6 mb-10 font-black">
-                    <p className="flex items-start text-black text-2xl leading-snug"><MapPin size={32} className="mr-5 mt-1 text-blue-600 shrink-0"/> {c.address}</p>
-                    {c.phone && <p className="text-blue-700 text-3xl font-black underline decoration-[6px] decoration-blue-100 ml-1"><a href={`tel:${c.phone.replace(/[^0-9]/g, '')}`}>📞 <span className="ml-3">{c.phone}</span></a></p>}
+                <div key={c.id} className="bg-white p-6 md:p-8 rounded-[2rem] border-2 border-slate-200 shadow-md animate-in fade-in slide-in-from-bottom-4 w-full">
+                  <h3 className="font-bold text-3xl text-slate-900 mb-4 uppercase tracking-tighter leading-none">{c.customerName}</h3>
+                  <div className="space-y-5 mb-8 font-bold">
+                    <p className="flex items-start text-slate-600 text-lg leading-snug"><MapPin size={24} className="mr-4 mt-1 text-blue-500 shrink-0"/> {c.address}</p>
+                    {c.phone && <p className="text-blue-600 text-xl font-bold ml-1"><a href={`tel:${c.phone.replace(/[^0-9]/g, '')}`}>📞 <span className="ml-2 underline decoration-2">{c.phone}</span></a></p>}
                     {c.notes && (
-                      <div className="bg-yellow-50 p-8 rounded-3xl border-[4px] border-yellow-300 text-black shadow-inner">
-                        <span className="font-black text-base uppercase tracking-widest text-yellow-900 block mb-3 underline decoration-yellow-400 decoration-[4px] underline-offset-8">Instructions</span>
-                        <p className="font-bold text-2xl leading-relaxed">{c.notes}</p>
+                      <div className="bg-yellow-50 p-6 rounded-2xl border-2 border-yellow-200 text-slate-800 shadow-inner">
+                        <span className="font-bold text-xs uppercase tracking-widest text-yellow-700 block mb-2 underline decoration-2 underline-offset-4">Instructions</span>
+                        <p className="font-medium text-lg leading-relaxed">{c.notes}</p>
                       </div>
                     )}
-                    {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="w-full bg-slate-100 py-5 rounded-2xl font-black text-black border-4 border-slate-300 uppercase text-sm tracking-widest flex items-center justify-center gap-3 transition-colors hover:bg-slate-300 border-none mt-4 shadow-md cursor-pointer"><FileText size={24}/> Open Job Sheet</button>}
+                    {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="w-full bg-slate-100 py-4 rounded-xl font-bold text-slate-600 border-2 border-slate-200 uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-colors hover:bg-slate-200 border-none mt-4 shadow-sm cursor-pointer"><FileText size={20}/> Open Job Sheet</button>}
                   </div>
-                  <button onClick={() => update(c.id, 'claimed', 'claimedAtLoc')} className="w-full bg-blue-600 text-white py-8 rounded-3xl font-black text-3xl hover:bg-blue-700 shadow-2xl uppercase tracking-widest active:scale-95 transition-all border-none cursor-pointer">Claim This Job</button>
+                  <button onClick={() => update(c.id, 'claimed', 'claimedAtLoc')} className="w-full bg-blue-600 text-white py-6 rounded-2xl font-bold text-2xl hover:bg-blue-700 shadow-lg uppercase tracking-widest active:scale-95 transition-all border-none cursor-pointer">Claim Job</button>
                 </div>
               ))}
             </div>
@@ -572,40 +538,40 @@ function DriverView({ calls, user, db, appId, setLoc }) {
         )}
         
         {tab === 'mine' && (
-          mine.length === 0 ? <div className="text-center py-32 text-slate-500 font-black text-xl uppercase tracking-widest bg-white rounded-[2rem] border-8 border-dashed border-slate-200">No Jobs Claimed</div> :
+          mine.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No Jobs Claimed</div> :
           mine.map(c => (
-            <div key={c.id} className="bg-white p-8 md:p-10 rounded-[2.5rem] border-[10px] border-blue-600 shadow-2xl w-full">
-              <div className="bg-blue-100 text-blue-900 font-black uppercase tracking-widest text-lg inline-block px-6 py-3 rounded-2xl mb-8 border-4 border-blue-300 shadow-sm">Your Current Job</div>
-              <h3 className="font-black text-5xl md:text-6xl text-black mb-8 uppercase tracking-tighter leading-none">{c.customerName}</h3>
-              <div className="space-y-6 mb-10 font-black">
-                <p className="flex items-start text-black text-3xl leading-snug"><MapPin size={40} className="mr-6 mt-1 text-blue-600 shrink-0"/> <span>{c.address} <span className="text-blue-700 ml-4 opacity-80">({c.area})</span></span></p>
-                {c.phone && <p className="text-blue-700 text-4xl font-black ml-2"><a href={`tel:${c.phone.replace(/[^0-9]/g, '')}`}>📞 <span className="ml-4 underline decoration-[8px] decoration-blue-200">{c.phone}</span></a></p>}
-                {c.notes && <div className="bg-yellow-50 p-10 rounded-3xl border-[6px] border-yellow-300 text-black font-bold shadow-inner text-3xl leading-relaxed">
-                  <span className="font-black text-lg uppercase tracking-widest text-yellow-900 block mb-4 underline decoration-yellow-400 decoration-[6px] underline-offset-[12px]">Instructions</span>
+            <div key={c.id} className="bg-white p-6 md:p-8 rounded-[2rem] border-[6px] border-blue-600 shadow-xl w-full">
+              <div className="bg-blue-100 text-blue-800 font-bold uppercase tracking-widest text-[10px] inline-block px-4 py-2 rounded-lg mb-6 border-2 border-blue-200 shadow-sm">Your Current Job</div>
+              <h3 className="font-bold text-3xl text-slate-900 mb-4 uppercase tracking-tighter leading-none">{c.customerName}</h3>
+              <div className="space-y-5 mb-8 font-bold">
+                <p className="flex items-start text-slate-600 text-lg leading-snug"><MapPin size={24} className="mr-4 mt-1 text-blue-500 shrink-0"/> <span>{c.address} <span className="text-blue-600 ml-2 opacity-80">({c.area})</span></span></p>
+                {c.phone && <p className="text-blue-600 text-xl font-bold ml-1"><a href={`tel:${c.phone.replace(/[^0-9]/g, '')}`}>📞 <span className="ml-2 underline decoration-2">{c.phone}</span></a></p>}
+                {c.notes && <div className="bg-yellow-50 p-6 rounded-2xl border-2 border-yellow-200 text-slate-800 font-medium shadow-inner text-lg leading-relaxed">
+                  <span className="font-bold text-xs uppercase tracking-widest text-yellow-700 block mb-2 underline decoration-2 underline-offset-4">Instructions</span>
                   {c.notes}
                 </div>}
               </div>
               {c.status === 'claimed' ? (
-                <button onClick={() => update(c.id, 'completed', 'completedAtLoc')} className="w-full bg-green-600 text-white py-10 rounded-3xl font-black text-4xl hover:bg-green-700 shadow-2xl uppercase tracking-widest active:scale-95 transition-all border-none cursor-pointer">Finish Job</button>
+                <button onClick={() => update(c.id, 'completed', 'completedAtLoc')} className="w-full bg-green-600 text-white py-6 rounded-2xl font-bold text-2xl hover:bg-green-700 shadow-lg uppercase tracking-widest active:scale-95 transition-all border-none cursor-pointer">Finish Job</button>
               ) : (
-                <div className="text-center text-green-900 font-black bg-green-100 py-10 rounded-3xl border-8 border-green-500 uppercase tracking-widest text-4xl shadow-inner">Job Complete ✓</div>
+                <div className="text-center text-green-800 font-bold bg-green-100 py-6 rounded-2xl border-4 border-green-300 uppercase tracking-widest text-xl shadow-inner">Job Complete ✓</div>
               )}
             </div>
           ))
         )}
         
         {tab === 'team' && (
-          team.length === 0 ? <div className="text-center py-32 text-slate-500 font-black text-xl uppercase tracking-widest bg-white rounded-[2rem] border-8 border-dashed border-slate-200">No One Else Working</div> :
-          <div className="grid gap-6 w-full px-2">
+          team.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No one else is working</div> :
+          <div className="grid gap-4 w-full">
             {team.map(c => (
-              <div key={c.id} className="bg-white p-8 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 w-full">
+              <div key={c.id} className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
                 <div>
-                  <h3 className="font-black text-3xl text-black uppercase tracking-tight">{c.customerName}</h3>
-                  <p className="text-lg text-blue-900 font-black uppercase tracking-widest mt-2">{c.area} • {c.address.split(',')[0]}</p>
+                  <h3 className="font-bold text-slate-800 text-xl uppercase tracking-tight">{c.customerName}</h3>
+                  <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mt-1">{c.area} • {c.address.split(',')[0]}</p>
                 </div>
-                <div className="flex items-center gap-4 bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-xl border-4 border-white">
-                  <User size={28}/>
-                  <span className="font-black uppercase text-xl tracking-widest">{c.claimedBy}</span>
+                <div className="flex items-center gap-3 bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-md border-2 border-white">
+                  <User size={20}/>
+                  <span className="font-bold uppercase text-sm tracking-widest">{c.claimedBy}</span>
                 </div>
               </div>
             ))}
@@ -615,9 +581,9 @@ function DriverView({ calls, user, db, appId, setLoc }) {
 
       {viewImage && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4" onClick={() => setViewImage(null)}>
-          <div className="relative max-w-6xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-4 transition-colors border-none cursor-pointer"><X size={48} /></button>
-            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-3xl bg-white shadow-2xl border-[16px] border-white" />
+          <div className="relative max-w-5xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-2 border-none cursor-pointer"><X size={40} /></button>
+            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-2xl bg-white shadow-2xl border-4 border-white" />
           </div>
         </div>
       )}

@@ -6,12 +6,14 @@ import {
   Truck, MapPin, AlertCircle, CheckCircle, Plus, LogOut, User, Briefcase, Clock, Users, Navigation, ExternalLink, Camera, FileText, X
 } from 'lucide-react';
 
-// --- API KEY INTEGRATED ---
+// --- YOUR GEMINI API KEY ---
 const apiKey = "AIzaSyCTbgLjZw5PURGU8Kvq4E5G3Ubp2dAHpd8";
 
-// --- FIREBASE INITIALIZATION ---
+// ============================================================================
+// 🚨 ACTION REQUIRED: REPLACE THESE DUMMY KEYS WITH YOUR REAL FIREBASE KEYS 🚨
+// ============================================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyDb7Gc5_bycttH0h77Z9xK4Xv4XOpUO0nc",
+  apiKey: "AIzaSyDb7Gc5_bycttH0h77Z9xK4Xv4XOpU00nc",
   authDomain: "serviceapp-94935.firebaseapp.com",
   projectId: "serviceapp-94935",
   storageBucket: "serviceapp-94935.firebasestorage.app",
@@ -19,6 +21,7 @@ const firebaseConfig = {
   appId: "1:1023263281742:web:ad61e0af399cf9c2b5a91f",
   measurementId: "G-BBR2KL3Y2J"
 };
+// ============================================================================
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -294,14 +297,14 @@ function ManagerView({ calls, user, db, appId }) {
               const canvas = document.createElement('canvas');
               let width = img.width;
               let height = img.height;
-              const MAX_DIM = 800; // Reduced to stay safely under Firebase 1MB limit
+              const MAX_DIM = 800;
               if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; } 
               else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
               canvas.width = width;
               canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', 0.6)); // Compress slightly more for faster syncing
+              resolve(canvas.toDataURL('image/jpeg', 0.6)); 
             };
           };
         });
@@ -333,7 +336,6 @@ function ManagerView({ calls, user, db, appId }) {
         }
       };
 
-      // --- THE FINAL FIX: Pointing to the stable, currently active Gemini 2.5 Flash engine ---
       const result = await fetchWithRetry(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
@@ -584,12 +586,12 @@ function DriverView({ calls, user, db, appId, setLoc }) {
             {team.map(c => (
               <div key={c.id} className="bg-white p-8 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 w-full">
                 <div>
-                  <h3 className="font-black text-3xl text-black uppercase tracking-tight">{c.customerName}</h3>
-                  <p className="text-lg text-blue-900 font-black uppercase tracking-widest mt-2">{c.area} • {c.address.split(',')[0]}</p>
+                  <h3 className="font-bold text-slate-800 text-xl uppercase tracking-tight">{c.customerName}</h3>
+                  <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mt-1">{c.area} • {c.address.split(',')[0]}</p>
                 </div>
-                <div className="flex items-center gap-4 bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-xl border-4 border-white">
-                  <User size={28}/>
-                  <span className="font-black uppercase text-xl tracking-widest">{c.claimedBy}</span>
+                <div className="flex items-center gap-3 bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-md border-2 border-white">
+                  <User size={20}/>
+                  <span className="font-bold uppercase text-sm tracking-widest">{c.claimedBy}</span>
                 </div>
               </div>
             ))}
@@ -600,8 +602,8 @@ function DriverView({ calls, user, db, appId, setLoc }) {
       {viewImage && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4" onClick={() => setViewImage(null)}>
           <div className="relative max-w-5xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-4 transition-colors border-none cursor-pointer"><X size={48} /></button>
-            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-3xl bg-white shadow-2xl border-[16px] border-white" />
+            <button onClick={() => setViewImage(null)} className="absolute -top-12 right-0 text-white hover:text-red-500 p-2 border-none cursor-pointer"><X size={40} /></button>
+            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-2xl bg-white shadow-2xl border-4 border-white" />
           </div>
         </div>
       )}

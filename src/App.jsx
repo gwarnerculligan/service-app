@@ -51,12 +51,16 @@ const groupCallsByArea = (callsArray) => {
   }, {});
 };
 
+// Updated fetch function to catch specific AI errors
 const fetchWithRetry = async (url, options, retries = 5) => {
   const delays = [1000, 2000, 4000, 8000, 16000];
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(`API Error ${response.status}: ${errData.error?.message || 'Unknown error'}`);
+      }
       return await response.json();
     } catch (e) {
       if (i === retries - 1) throw e;
@@ -271,6 +275,11 @@ function ManagerView({ calls, user, db, appId }) {
     const file = e.target.files[0];
     if (!file) return;
 
+    if (!apiKey || apiKey === "") {
+        setScanError("API Key is missing. Please update the code.");
+        return;
+    }
+
     setIsScanning(true);
     setScanError('');
     try {
@@ -292,7 +301,7 @@ function ManagerView({ calls, user, db, appId }) {
               canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', 0.7));
+              resolve(canvas.toDataURL('image/jpeg', 0.7)); // We convert EVERYTHING to a pure JPEG
             };
           };
         });
@@ -306,11 +315,21 @@ function ManagerView({ calls, user, db, appId }) {
           role: "user",
           parts: [
             { text: `Analyze this service call sheet. Extract: customerName, address, phone, and notes (any special instructions). Map the address to the best matching area from this list: ${SERVICE_AREAS.join(', ')}. Return valid JSON only.` },
-            { inlineData: { mimeType: file.type, data: base64Data } }
+            { inlineData: { mimeType: "image/jpeg", data: base64Data } } // FIX: Tell Google it is definitively a JPEG
           ]
         }],
         generationConfig: {
-          responseMimeType: "application/json"
+          responseMimeType: "application/json",
+          responseSchema: { // FIX: Strict JSON enforcement so it doesn't break the form
+            type: "OBJECT",
+            properties: {
+              customerName: { type: "STRING" },
+              address: { type: "STRING" },
+              phone: { type: "STRING" },
+              notes: { type: "STRING" },
+              area: { type: "STRING" }
+            }
+          }
         }
       };
 
@@ -328,14 +347,15 @@ function ManagerView({ calls, user, db, appId }) {
           customerName: data.customerName || '',
           address: data.address || '',
           phone: data.phone || '',
-          notes: data.notes || data.instructions || '',
+          notes: data.notes || '',
           area: SERVICE_AREAS.includes(data.area) ? data.area : '',
           imageUri: compressedDataUrl
         }));
       }
     } catch (err) {
       console.error("AI Error:", err);
-      setScanError("AI couldn't read the sheet. Please enter manually.");
+      // Improved error message to tell us EXACTLY what broke if it fails again
+      setScanError(`AI Error: ${err.message || "Couldn't read sheet."} Please enter manually.`);
     } finally {
       setIsScanning(false);
     }
@@ -474,7 +494,7 @@ function ManagerView({ calls, user, db, appId }) {
   );
 }
 
-function DriverView({ calls, user, db, setLoc }) {
+function DriverView({ calls, user, db, appId, setLoc }) {
   const [tab, setTab] = useState('open');
   const [viewImage, setViewImage] = useState(null);
   const available = calls.filter(c => c.status === 'open');

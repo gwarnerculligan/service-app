@@ -7,7 +7,14 @@ import {
 } from 'lucide-react';
 
 // --- SECURE API KEY SETUP ---
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+// This pattern prevents the "import.meta" warning in older target environments
+const apiKey = (() => {
+  try {
+    return import.meta.env.VITE_GEMINI_API_KEY;
+  } catch (e) {
+    return "";
+  }
+})();
 
 // --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
@@ -524,7 +531,10 @@ function DriverView({ calls, user, db, appId, setLoc }) {
   const available = calls.filter(c => c.status === 'open');
   const myOpen = calls.filter(c => c.claimedBy === user && c.status === 'claimed');
   const myFinished = calls.filter(c => c.claimedBy === user && c.status === 'completed');
-  const team = calls.filter(c => c.status === 'claimed' && c.claimedBy !== user);
+  
+  // Separating Team calls into Claimed and Completed
+  const teamClaimed = calls.filter(c => c.status === 'claimed' && c.claimedBy !== user);
+  const teamCompleted = calls.filter(c => c.status === 'completed' && c.claimedBy !== user);
 
   const update = async (id, status, locKey) => {
     setLoc(true);
@@ -544,7 +554,7 @@ function DriverView({ calls, user, db, appId, setLoc }) {
     { id: 'open', label: `Board (${available.length})` },
     { id: 'myOpen', label: `My Open Jobs (${myOpen.length})` },
     { id: 'myFinished', label: `My Finished Jobs (${myFinished.length})` },
-    { id: 'team', label: `Team (${team.length})` }
+    { id: 'team', label: `Team (${teamClaimed.length + teamCompleted.length})` }
   ];
 
   return (
@@ -604,7 +614,6 @@ function DriverView({ calls, user, db, appId, setLoc }) {
                   <span className="font-bold text-xs uppercase tracking-widest text-yellow-700 block mb-2 underline decoration-2 underline-offset-4">Instructions</span>
                   {c.notes}
                 </div>}
-                {/* View original sheet button for claimed calls */}
                 {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="w-full bg-slate-100 py-4 rounded-xl font-bold text-slate-600 border-2 border-slate-200 uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-colors hover:bg-slate-200 border-none mt-4 shadow-sm cursor-pointer"><FileText size={20}/> Open Job Sheet</button>}
               </div>
               <button onClick={() => update(c.id, 'completed', 'completedAtLoc')} className="w-full bg-green-600 text-white py-6 rounded-2xl font-bold text-2xl hover:bg-green-700 shadow-lg uppercase tracking-widest active:scale-95 transition-all border-none cursor-pointer">Finish Job</button>
@@ -628,20 +637,58 @@ function DriverView({ calls, user, db, appId, setLoc }) {
         )}
         
         {tab === 'team' && (
-          team.length === 0 ? <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No one else is working</div> :
-          <div className="grid gap-4 w-full px-2">
-            {team.map(c => (
-              <div key={c.id} className="bg-white p-8 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 w-full">
-                <div>
-                  <h3 className="font-bold text-slate-800 text-xl uppercase tracking-tight">{c.customerName}</h3>
-                  <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mt-1">{c.area} • {c.address.split(',')[0]}</p>
+          teamClaimed.length === 0 && teamCompleted.length === 0 ? 
+          <div className="text-center py-24 text-slate-400 font-bold text-lg uppercase tracking-widest bg-white rounded-3xl border-2 border-dashed border-slate-200">No team activity yet</div> :
+          <div className="space-y-10 px-2">
+            {/* SUB-SECTION 1: CURRENTLY WORKING */}
+            {teamClaimed.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm w-fit border-none">
+                  <Clock size={16} />
+                  <span className="font-bold uppercase text-xs tracking-widest">Currently Working ({teamClaimed.length})</span>
                 </div>
-                <div className="flex items-center gap-3 bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-md border-2 border-white">
-                  <User size={20}/>
-                  <span className="font-bold uppercase text-sm tracking-widest">{c.claimedBy}</span>
+                <div className="grid gap-4">
+                  {teamClaimed.map(c => (
+                    <div key={c.id} className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-slate-800 text-xl uppercase tracking-tight">{c.customerName}</h3>
+                        <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mt-1">{c.area} • {c.address.split(',')[0]}</p>
+                        {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="text-slate-400 hover:text-blue-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mt-2 bg-transparent border-none cursor-pointer"><FileText size={14}/> View Sheet</button>}
+                      </div>
+                      <div className="flex items-center gap-3 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl border border-blue-100 shrink-0">
+                        <User size={18}/>
+                        <span className="font-bold uppercase text-xs tracking-widest">{c.claimedBy}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* SUB-SECTION 2: FINISHED TODAY */}
+            {teamCompleted.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow-sm w-fit border-none">
+                  <CheckCircle size={16} />
+                  <span className="font-bold uppercase text-xs tracking-widest">Finished Today ({teamCompleted.length})</span>
+                </div>
+                <div className="grid gap-4">
+                  {teamCompleted.map(c => (
+                    <div key={c.id} className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full opacity-70">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-slate-800 text-xl uppercase tracking-tight">{c.customerName}</h3>
+                        <p className="text-sm text-green-600 font-bold uppercase tracking-widest mt-1">Completed in {c.area}</p>
+                        {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="text-slate-400 hover:text-blue-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 mt-2 bg-transparent border-none cursor-pointer"><FileText size={14}/> View Sheet</button>}
+                      </div>
+                      <div className="flex items-center gap-3 bg-green-50 text-green-600 px-4 py-2 rounded-xl border border-green-100 shrink-0">
+                        <User size={18}/>
+                        <span className="font-bold uppercase text-xs tracking-widest">{c.claimedBy}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

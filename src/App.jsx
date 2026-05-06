@@ -7,10 +7,7 @@ import {
 } from 'lucide-react';
 
 // --- SECURE API KEY SETUP ---
-// This uses a safe check to pull the key from your Vercel Environment Variables (Vault)
-const apiKey = (typeof import.meta !== 'undefined' && import.meta.env) 
-  ? import.meta.env.VITE_GEMINI_API_KEY 
-  : "";
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 // --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
@@ -162,6 +159,8 @@ export default function App() {
           max-width: 900px;
           margin: 0 auto;
         }
+
+        .hidden { display: none; }
       `}</style>
 
       {!appUser ? (
@@ -605,6 +604,8 @@ function DriverView({ calls, user, db, appId, setLoc }) {
                   <span className="font-bold text-xs uppercase tracking-widest text-yellow-700 block mb-2 underline decoration-2 underline-offset-4">Instructions</span>
                   {c.notes}
                 </div>}
+                {/* View original sheet button for claimed calls */}
+                {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="w-full bg-slate-100 py-4 rounded-xl font-bold text-slate-600 border-2 border-slate-200 uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-colors hover:bg-slate-200 border-none mt-4 shadow-sm cursor-pointer"><FileText size={20}/> Open Job Sheet</button>}
               </div>
               <button onClick={() => update(c.id, 'completed', 'completedAtLoc')} className="w-full bg-green-600 text-white py-6 rounded-2xl font-bold text-2xl hover:bg-green-700 shadow-lg uppercase tracking-widest active:scale-95 transition-all border-none cursor-pointer">Finish Job</button>
             </div>
@@ -618,7 +619,8 @@ function DriverView({ calls, user, db, appId, setLoc }) {
               <div className="bg-slate-100 text-slate-600 font-bold uppercase tracking-widest text-[10px] inline-block px-4 py-2 rounded-lg mb-6 border-2 border-slate-200 shadow-sm">Past Job</div>
               <h3 className="font-bold text-3xl text-slate-900 mb-4 uppercase tracking-tighter leading-none">{c.customerName}</h3>
               <div className="space-y-5 mb-8 font-bold">
-                <p className="flex items-start text-slate-600 text-lg leading-snug"><MapPin size={24} className="mr-4 mt-1 text-slate-400 shrink-0"/> <span>{c.address} <span className="text-blue-600 ml-2 opacity-80">({c.area})</span></span></p>
+                <p className="flex items-start text-slate-600 text-lg leading-snug"><MapPin size={24} className="mr-4 mt-1 text-slate-400 shrink-0"/> <span>{c.address} <span className="text-slate-500 ml-2 opacity-80">({c.area})</span></span></p>
+                {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="w-full bg-slate-100 py-4 rounded-xl font-bold text-slate-600 border-2 border-slate-200 uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-colors hover:bg-slate-200 border-none mt-4 shadow-sm cursor-pointer"><FileText size={20}/> Open Job Sheet</button>}
               </div>
               <div className="text-center text-green-800 font-bold bg-green-100 py-6 rounded-2xl border-4 border-green-300 uppercase tracking-widest text-xl shadow-inner">Job Complete ✓</div>
             </div>

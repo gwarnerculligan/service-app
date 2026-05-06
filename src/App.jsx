@@ -315,12 +315,12 @@ function ManagerView({ calls, user, db, appId }) {
           role: "user",
           parts: [
             { text: `Analyze this service call sheet. Extract: customerName, address, phone, and notes (any special instructions). Map the address to the best matching area from this list: ${SERVICE_AREAS.join(', ')}. Return valid JSON only.` },
-            { inlineData: { mimeType: "image/jpeg", data: base64Data } } // FIX: Tell Google it is definitively a JPEG
+            { inlineData: { mimeType: "image/jpeg", data: base64Data } } // Tell Google it is definitively a JPEG
           ]
         }],
         generationConfig: {
           responseMimeType: "application/json",
-          responseSchema: { // FIX: Strict JSON enforcement so it doesn't break the form
+          responseSchema: { // Strict JSON enforcement so it doesn't break the form
             type: "OBJECT",
             properties: {
               customerName: { type: "STRING" },
@@ -333,8 +333,9 @@ function ManagerView({ calls, user, db, appId }) {
         }
       };
 
+      // CORRECTED AI MODEL ENDPOINT
       const result = await fetchWithRetry(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
       );
 
@@ -464,7 +465,7 @@ function ManagerView({ calls, user, db, appId }) {
                       )}
                       <div className="flex flex-wrap gap-4 items-center mt-4 pt-4 border-t border-slate-100 font-bold text-[10px] uppercase tracking-widest">
                         {c.claimedAtLoc && <a href={`https://www.google.com/maps?q=${c.claimedAtLoc.lat},${c.claimedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-blue-500 flex items-center">📍 Claimed</a>}
-                        {c.completedAtLoc && <a href={`https://www.google.com/maps?q=${c.completedAtLoc.lat},${c.completedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-green-600 flex items-center">✅ Finished</a>}
+                        {c.completedAtLoc && <a href={`https://www.google.com/maps?q=${c.completedAtLoc.lat},${c.completedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-green-600 flex items-center bg-green-50 px-4 py-2 rounded-lg border-2 border-green-200 hover:bg-green-100">✅ Finished</a>}
                         {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="text-slate-500 flex items-center bg-slate-100 px-3 py-1 rounded cursor-pointer border-none font-bold uppercase">📄 View Sheet</button>}
                       </div>
                     </div>

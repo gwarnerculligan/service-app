@@ -7,11 +7,11 @@ import {
 } from 'lucide-react';
 
 // --- SECURE API KEY SETUP ---
-// (Note: For the preview window here, it's set to "", but in StackBlitz use import.meta.env.VITE_GEMINI_API_KEY)
-const apiKey = "";
-import.meta.env.VITE_GEMINI_API_KEY;
+// This pulls the Gemini key from your Vercel Environment Variables (Vault)
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
 // ============================================================================
-// 🚨 ACTION REQUIRED: REPLACE THESE DUMMY KEYS WITH YOUR REAL FIREBASE KEYS 🚨
+// 🚨 FIREBASE CONFIGURATION (REAL KEYS INTEGRATED) 🚨
 // ============================================================================
 const firebaseConfig = {
   apiKey: "AIzaSyDb7Gc5_bycttH0h77Z9xK4Xv4XOpU00nc",
@@ -55,7 +55,6 @@ const groupCallsByArea = (callsArray) => {
   }, {});
 };
 
-// Updated fetch function to catch specific AI errors
 const fetchWithRetry = async (url, options, retries = 5) => {
   const delays = [1000, 2000, 4000, 8000, 16000];
   for (let i = 0; i < retries; i++) {
@@ -136,14 +135,13 @@ export default function App() {
   }
 
   return (
-    <div className="font-sans">
+    <div className="font-sans text-left">
       <style>{`
         :root, body, #root { 
           min-height: 100vh !important;
           margin: 0 !important;
           padding: 0 !important;
           background-color: #f1f5f9 !important; 
-          text-align: left !important;
           color: #0f172a !important; 
         }
         
@@ -154,7 +152,7 @@ export default function App() {
         
         h1, h2, h3 { font-weight: 800 !important; color: #0f172a !important; }
 
-        .text-white, .text-white *, .bg-blue-600 *, .bg-blue-700 *, .bg-green-600 * { 
+        .text-white, .text-white * { 
           color: #ffffff !important; 
         }
 
@@ -197,7 +195,7 @@ export default function App() {
             {appUser.role === 'Office Staff' ? (
               <ManagerView calls={serviceCalls} user={appUser.name} db={db} appId={appId} />
             ) : (
-              <DriverView calls={serviceCalls} user={appUser.name} db={appId} setLoc={setIsLocating} />
+              <DriverView calls={serviceCalls} user={appUser.name} db={db} appId={appId} setLoc={setIsLocating} />
             )}
           </main>
         </div>
@@ -278,6 +276,11 @@ function ManagerView({ calls, user, db, appId }) {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (!apiKey) {
+        setScanError("API Key hidden vault missing. Please add VITE_GEMINI_API_KEY in Vercel Settings.");
+        return;
+    }
 
     setIsScanning(true);
     setScanError('');
@@ -378,7 +381,7 @@ function ManagerView({ calls, user, db, appId }) {
   };
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full text-left">
       <div className="flex justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <h2 className="text-xl font-bold text-slate-800 uppercase tracking-tight ml-2">Service Queue</h2>
         <button 
@@ -514,7 +517,7 @@ function DriverView({ calls, user, db, appId, setLoc }) {
   };
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full text-left">
       <div className="flex bg-white rounded-2xl p-2 border-2 border-slate-200 shadow-sm sticky top-16 z-10 w-full">
         {['open', 'mine', 'team'].map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`flex-1 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border-none cursor-pointer ${tab === t ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>

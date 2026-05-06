@@ -8,7 +8,7 @@ import {
 
 // --- SECURE API KEY SETUP ---
 // IMPORTANT: When pasting into StackBlitz, change the line below to: const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const apiKey = "";
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 // ============================================================================
 // 🚨 FIREBASE CONFIGURATION (REAL KEYS INTEGRATED) 🚨

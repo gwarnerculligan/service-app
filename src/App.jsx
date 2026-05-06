@@ -522,9 +522,9 @@ function DriverView({ calls, user, db, appId, setLoc }) {
 
   const tabs = [
     { id: 'open', label: `Board (${available.length})` },
-    { id: 'myOpen', label: `My Open Jobs` },
-    { id: 'myFinished', label: `My Finished Jobs` },
-    { id: 'team', label: `Team` }
+    { id: 'myOpen', label: `My Open Jobs (${myOpen.length})` },
+    { id: 'myFinished', label: `My Finished Jobs (${myFinished.length})` },
+    { id: 'team', label: `Team (${team.length})` }
   ];
 
   return (

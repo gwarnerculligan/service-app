@@ -219,7 +219,7 @@ function Login({ onLogin }) {
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-200 p-4">
       <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl w-full max-w-md border-2 border-white">
         <div className="flex justify-center mb-4 text-blue-600"><Truck size={56}/></div>
-        <h1 className="text-3xl font-bold text-center mb-8 text-slate-900 uppercase tracking-tight">Access Portal</h1>
+        <h1 className="text-3xl font-bold text-center mb-8 text-slate-900 tracking-tight">ServiceApp</h1>
         
         <div className="grid grid-cols-2 gap-4 mb-8">
           <button 
@@ -334,7 +334,7 @@ function ManagerView({ calls, user, db, appId }) {
       };
 
       const result = await fetchWithRetry(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
       );
 

@@ -1,99 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
-import {
-  getAuth,
-  signInWithCustomToken,
-  signInAnonymously,
-  onAuthStateChanged,
-} from 'firebase/auth';
-import {
-  getFirestore,
-  collection,
-  doc,
-  onSnapshot,
-  updateDoc,
-  addDoc,
-} from 'firebase/firestore';
-import {
-  Truck,
-  MapPin,
-  AlertCircle,
-  CheckCircle,
-  Plus,
-  LogOut,
-  User,
-  Briefcase,
-  Clock,
-  Users,
-  Navigation,
-  ExternalLink,
-  Camera,
-  FileText,
-  X,
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, doc, onSnapshot, updateDoc, addDoc } from 'firebase/firestore';
+import { 
+  Truck, MapPin, AlertCircle, CheckCircle, Plus, LogOut, User, Briefcase, Clock, Users, Navigation, ExternalLink, Camera, FileText, X
 } from 'lucide-react';
 
-const apiKey = '';
+const apiKey = "";
 
 // --- FIREBASE INITIALIZATION ---
 const firebaseConfig = {
-  apiKey: 'AIzaSyDb7Gc5_bycttH0h77Z9xK4Xv4XOpUO0nc',
-  authDomain: 'serviceapp-94935.firebaseapp.com',
-  projectId: 'serviceapp-94935',
-  storageBucket: 'serviceapp-94935.firebasestorage.app',
-  messagingSenderId: '1023263281742',
-  appId: '1:1023263281742:web:ad61e0af399cf9c2b5a91f',
-  measurementId: 'G-BBR2KL3Y2J',
+  apiKey: "AIzaSyDb7Gc5_bycttH0h77Z9xK4Xv4XOpUO0nc",
+  authDomain: "serviceapp-94935.firebaseapp.com",
+  projectId: "serviceapp-94935",
+  storageBucket: "serviceapp-94935.firebasestorage.app",
+  messagingSenderId: "1023263281742",
+  appId: "1:1023263281742:web:ad61e0af399cf9c2b5a91f",
+  measurementId: "G-BBR2KL3Y2J"
 };
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'service-app-v1';
+const appId = 'service-app-v1';
 
 const SERVICE_AREAS = [
-  'Downtown',
-  'Monkey Junction',
-  'Carolina Beach',
-  'Oleander',
-  'Market St',
-  'Castle Hayne',
-  'Porters Neck',
-  'Hampstead',
-  'Leland',
-  'Southport',
-  'Midtown',
-  'Pine Valley',
-  'UNCW Area',
-  'Sunset Park',
-  'Ogden',
-  'Mayfaire',
-  'Landfall',
-  'Middle Sound',
-  'Bayshore',
-  'Wrightsville Beach',
-  'Masonboro',
-  'Murrayville',
-  'Oak Island',
+  "Downtown", "Monkey Junction", "Carolina Beach", "Oleander", "Market St",
+  "Castle Hayne", "Porters Neck", "Hampstead", "Leland", "Southport",
+  "Midtown", "Pine Valley", "UNCW Area", "Sunset Park", "Ogden",
+  "Mayfaire", "Landfall", "Middle Sound", "Bayshore", "Wrightsville Beach",
+  "Masonboro", "Murrayville", "Oak Island"
 ];
 
 const groupCallsByArea = (callsArray) => {
   const grouped = callsArray.reduce((acc, call) => {
-    const area = call.area || 'Unassigned Area';
+    const area = call.area || "Unassigned Area";
     if (!acc[area]) acc[area] = [];
     acc[area].push(call);
     return acc;
   }, {});
-
-  // Sort areas alphabetically, keeping "Unassigned Area" at the bottom
-  return Object.keys(grouped)
-    .sort((a, b) => {
-      if (a === 'Unassigned Area') return 1;
-      if (b === 'Unassigned Area') return -1;
-      return a.localeCompare(b);
-    })
-    .reduce((acc, key) => {
-      acc[key] = grouped[key];
-      return acc;
-    }, {});
+  
+  return Object.keys(grouped).sort((a, b) => {
+    if (a === "Unassigned Area") return 1;
+    if (b === "Unassigned Area") return -1;
+    return a.localeCompare(b);
+  }).reduce((acc, key) => {
+    acc[key] = grouped[key];
+    return acc;
+  }, {});
 };
 
 const fetchWithRetry = async (url, options, retries = 5) => {
@@ -101,12 +55,11 @@ const fetchWithRetry = async (url, options, retries = 5) => {
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return await response.json();
     } catch (e) {
       if (i === retries - 1) throw e;
-      await new Promise((res) => setTimeout(res, delays[i]));
+      await new Promise(res => setTimeout(res, delays[i]));
     }
   }
 };
@@ -124,20 +77,17 @@ const getCurrentLocation = () => {
 
 export default function App() {
   const [firebaseUser, setFirebaseUser] = useState(null);
-  const [appUser, setAppUser] = useState(null);
+  const [appUser, setAppUser] = useState(null); 
   const [serviceCalls, setServiceCalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
 
-  // RULE 3: Auth Before Queries - Always await sign in
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Since we are using your personal Firebase project now,
-        // we must sign in anonymously directly instead of using the preview token.
         await signInAnonymously(auth);
       } catch (err) {
-        console.error('Auth error:', err);
+        console.error("Auth error:", err);
       }
     };
     initAuth();
@@ -149,91 +99,97 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // DATA FETCHING EFFECT
   useEffect(() => {
-    // RULE 1: Strict Paths
-    const callsRef = collection(
-      db,
-      'artifacts',
-      appId,
-      'public',
-      'data',
-      'serviceCalls'
-    );
-
+    if (!firebaseUser) return;
+    const callsRef = collection(db, 'artifacts', appId, 'public', 'data', 'serviceCalls');
     const unsubscribe = onSnapshot(
-      callsRef,
+      callsRef, 
       (snap) => {
-        // RULE 2: No Complex Queries - Sort in memory
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         setServiceCalls(data);
         setLoading(false);
       },
       (error) => {
-        console.error('Firestore permission error or other failure:', error);
+        console.error("Firestore error:", error);
         setLoading(false);
       }
     );
-
     return () => unsubscribe();
   }, [firebaseUser]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600"></div>
       </div>
     );
   }
 
-  if (!appUser) {
-    return <Login onLogin={(name, role) => setAppUser({ name, role })} />;
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-10">
-      {isLocating && (
-        <div className="fixed inset-0 bg-white/60 flex items-center justify-center z-50 font-bold text-blue-600">
-          Updating GPS...
+    <div className="font-sans">
+      {/* BULLDOZER CSS OVERRIDE: Forces full width and black font */}
+      <style>{`
+        :root, body, #root { 
+          width: 100vw !important;
+          max-width: 100% !important;
+          min-height: 100vh !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background-color: #f8fafc !important; 
+          text-align: left !important;
+        }
+        
+        /* Force solid black text everywhere */
+        h1, h2, h3, h4, p, span, label, input, select, textarea, button, div { 
+          color: #000000 !important; 
+          opacity: 1 !important; 
+        }
+        
+        /* White text for elements inside blue/green backgrounds */
+        .text-white, .text-white *, .bg-blue-600 *, .bg-blue-700 *, .bg-green-600 *, .bg-slate-900 * { 
+          color: #ffffff !important; 
+        }
+
+        select option { 
+          color: #000000 !important; 
+          background: #ffffff !important;
+        }
+
+        *:focus { outline: none !important; }
+      `}</style>
+
+      {!appUser ? (
+        <Login onLogin={(name, role) => setAppUser({ name, role })} />
+      ) : (
+        <div className="min-h-screen bg-slate-100 pb-10 w-full">
+          {isLocating && (
+            <div className="fixed inset-0 bg-white/90 flex items-center justify-center z-50 font-black text-blue-600 text-xl">
+              Updating GPS...
+            </div>
+          )}
+          <nav className="bg-blue-700 p-5 shadow-lg sticky top-0 z-10 flex justify-between items-center w-full border-none">
+            <div className="flex items-center space-x-3">
+              <Truck className="text-white" size={28} /> 
+              <span className="font-black text-2xl text-white tracking-tight">ServiceApp</span>
+            </div>
+            <div className="flex items-center space-x-4 text-base font-bold">
+              <span className="hidden sm:inline text-white bg-blue-800 px-3 py-1 rounded-md">{appUser.name} ({appUser.role})</span>
+              <button onClick={() => setAppUser(null)} className="p-2 hover:bg-blue-900 rounded-lg text-white transition-colors bg-blue-800 border-none cursor-pointer">
+                <LogOut size={22}/>
+              </button>
+            </div>
+          </nav>
+
+          <main className="w-full max-w-none px-4 md:px-8 py-6">
+            {appUser.role === 'Office Staff' ? (
+              <ManagerView calls={serviceCalls} user={appUser.name} db={db} appId={appId} />
+            ) : (
+              <DriverView calls={serviceCalls} user={appUser.name} db={db} appId={appId} setLoc={setIsLocating} />
+            )}
+          </main>
         </div>
       )}
-      <nav className="bg-blue-700 text-white p-4 shadow-lg sticky top-0 z-10 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <Truck />
-          <span className="font-bold text-lg">ServiceApp</span>
-        </div>
-        <div className="flex items-center space-x-3 text-sm">
-          <span className="hidden sm:inline opacity-80">
-            {appUser.name} ({appUser.role})
-          </span>
-          <button
-            onClick={() => setAppUser(null)}
-            className="p-1 hover:bg-blue-800 rounded"
-          >
-            <LogOut size={18} />
-          </button>
-        </div>
-      </nav>
-
-      <main className="max-w-4xl mx-auto p-4">
-        {appUser.role === 'Office Staff' ? (
-          <ManagerView
-            calls={serviceCalls}
-            user={appUser.name}
-            db={db}
-            appId={appId}
-          />
-        ) : (
-          <DriverView
-            calls={serviceCalls}
-            user={appUser.name}
-            db={db}
-            appId={appId}
-            setLoc={setIsLocating}
-          />
-        )}
-      </main>
     </div>
   );
 }
@@ -241,83 +197,60 @@ export default function App() {
 function Login({ onLogin }) {
   const [name, setName] = useState('');
   const [role, setRole] = useState('Driver');
-
-  const DRIVERS = ['Chris', 'Elijah', 'Eric', 'Garrett', 'Jeremy', 'Lynwood'];
-  const OFFICE_STAFF = [
-    'Brooke',
-    'Garrett',
-    'Hailee',
-    'Jenna',
-    'Kelly',
-    'Logan',
-  ];
+  
+  const DRIVERS = ["Chris", "Elijah", "Eric", "Garrett", "Jeremy", "Lynwood"];
+  const OFFICE_STAFF = ["Brooke", "Garrett", "Hailee", "Jenna", "Kelly", "Logan"];
 
   const handleRoleChange = (newRole) => {
     setRole(newRole);
-    setName(''); // Reset the name selection when changing roles
+    setName('');
   };
 
-  // Determine which list to show based on the selected role
   const currentNames = role === 'Driver' ? DRIVERS : OFFICE_STAFF;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
-      <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-md">
-        <div className="flex justify-center mb-4 text-blue-600">
-          <Truck size={48} />
-        </div>
-        <h1 className="text-2xl font-bold text-center mb-6">
-          ServiceApp Access
-        </h1>
-
-        {/* Moved Role Selection Above Dropdown */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <button
-            onClick={() => handleRoleChange('Driver')}
-            className={`p-3 rounded-lg border flex flex-col items-center transition-colors ${
-              role === 'Driver'
-                ? 'bg-blue-50 border-blue-600 text-blue-600 shadow-sm'
-                : 'bg-white hover:bg-gray-50'
-            }`}
+    <div className="min-h-screen w-full flex items-center justify-center bg-slate-200 p-4">
+      <div className="bg-white p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-lg border-4 border-white">
+        <div className="flex justify-center mb-6 text-blue-600"><Truck size={80}/></div>
+        <h1 className="text-4xl font-black text-center mb-10 text-black uppercase tracking-tighter">ServiceApp Access</h1>
+        
+        <div className="grid grid-cols-2 gap-5 mb-10">
+          <button 
+            onClick={() => handleRoleChange('Driver')} 
+            className={`p-5 rounded-2xl border-4 flex flex-col items-center transition-all cursor-pointer ${role === 'Driver' ? 'bg-blue-600 border-blue-600 shadow-xl scale-105' : 'bg-slate-50 border-slate-300 hover:border-blue-400 hover:bg-slate-100'}`}
           >
-            <Briefcase />
-            <span className="text-xs mt-1 font-medium">Driver</span>
+            <Briefcase size={32} className={role === 'Driver' ? 'text-white' : 'text-slate-500'}/>
+            <span className={`text-base mt-3 font-black uppercase ${role === 'Driver' ? 'text-white' : 'text-black'}`}>Driver</span>
           </button>
-          <button
-            onClick={() => handleRoleChange('Office Staff')}
-            className={`p-3 rounded-lg border flex flex-col items-center transition-colors ${
-              role === 'Office Staff'
-                ? 'bg-blue-50 border-blue-600 text-blue-600 shadow-sm'
-                : 'bg-white hover:bg-gray-50'
-            }`}
+          <button 
+            onClick={() => handleRoleChange('Office Staff')} 
+            className={`p-5 rounded-2xl border-4 flex flex-col items-center transition-all cursor-pointer ${role === 'Office Staff' ? 'bg-blue-600 border-blue-600 shadow-xl scale-105' : 'bg-slate-50 border-slate-300 hover:border-blue-400 hover:bg-slate-100'}`}
           >
-            <User />
-            <span className="text-xs mt-1 font-medium">Office Staff</span>
+            <User size={32} className={role === 'Office Staff' ? 'text-white' : 'text-slate-500'}/>
+            <span className={`text-base mt-3 font-black uppercase ${role === 'Office Staff' ? 'text-white' : 'text-black'}`}>Office Staff</span>
           </button>
         </div>
 
-        {/* Dynamic Dropdown */}
-        <select
-          className="w-full border p-3 rounded-lg mb-6 focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer shadow-sm"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        >
-          <option value="" disabled>
-            Select your name...
-          </option>
-          {currentNames.map((member) => (
-            <option key={member} value={member}>
-              {member}
-            </option>
-          ))}
-        </select>
+        <div className="space-y-3 mb-10 text-left">
+          <label className="block text-sm font-black text-black uppercase tracking-widest ml-2">Who are you?</label>
+          <select 
+            className="w-full border-4 border-slate-300 p-5 rounded-2xl focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none bg-slate-50 cursor-pointer text-black font-black text-xl shadow-inner transition-all appearance-none" 
+            value={name} 
+            onChange={e => setName(e.target.value)} 
+          >
+            <option value="" disabled>Choose your name...</option>
+            {currentNames.map(member => (
+              <option key={member} value={member}>{member}</option>
+            ))}
+          </select>
+        </div>
 
-        <button
-          onClick={() => name && onLogin(name, role)}
-          className="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50"
+        <button 
+          onClick={() => name && onLogin(name, role)} 
+          className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black text-2xl hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 transition-all shadow-[0_8px_30px_rgb(37,99,235,0.3)] active:scale-95 uppercase tracking-wider border-none cursor-pointer"
           disabled={!name}
         >
-          Launch App
+          Launch System
         </button>
       </div>
     </div>
@@ -326,15 +259,7 @@ function Login({ onLogin }) {
 
 function ManagerView({ calls, user, db, appId }) {
   const [show, setShow] = useState(false);
-  const [form, setForm] = useState({
-    customerName: '',
-    address: '',
-    phone: '',
-    notes: '',
-    urgency: 'Medium',
-    imageUri: '',
-    area: '',
-  });
+  const [form, setForm] = useState({ customerName: '', address: '', phone: '', notes: '', urgency: 'Medium', imageUri: '', area: '' });
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState('');
   const [viewImage, setViewImage] = useState(null);
@@ -342,12 +267,9 @@ function ManagerView({ calls, user, db, appId }) {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setIsScanning(true);
     setScanError('');
-
     try {
-      // Compress the image before saving to keep database fast
       const compressImage = (file) => {
         return new Promise((resolve) => {
           const reader = new FileReader();
@@ -359,8 +281,7 @@ function ManagerView({ calls, user, db, appId }) {
               const canvas = document.createElement('canvas');
               let width = img.width;
               let height = img.height;
-              const MAX_DIM = 1000; // Max width or height
-
+              const MAX_DIM = 1000;
               if (width > height && width > MAX_DIM) {
                 height *= MAX_DIM / width;
                 width = MAX_DIM;
@@ -368,12 +289,11 @@ function ManagerView({ calls, user, db, appId }) {
                 width *= MAX_DIM / height;
                 height = MAX_DIM;
               }
-
               canvas.width = width;
               canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', 0.6)); // Compress to JPEG
+              resolve(canvas.toDataURL('image/jpeg', 0.6));
             };
           };
         });
@@ -381,35 +301,29 @@ function ManagerView({ calls, user, db, appId }) {
 
       const compressedDataUrl = await compressImage(file);
       const base64Data = compressedDataUrl.split(',')[1];
-
+      
       const payload = {
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                text: `Analyze this service call sheet. Extract the customer name, address, phone number, and any 'Special Instructions' (put this under notes). If urgency is explicitly stated as High, Medium, or Low, extract that too. Finally, try to determine the best matching service area from this exact list: ${SERVICE_AREAS.join(
-                  ', '
-                )} based on the address or notes.`,
-              },
-              { inlineData: { mimeType: file.type, data: base64Data } },
-            ],
-          },
-        ],
+        contents: [{
+          role: "user",
+          parts: [
+            { text: `Extract service info. Areas: ${SERVICE_AREAS.join(', ')}.` },
+            { inlineData: { mimeType: file.type, data: base64Data } }
+          ]
+        }],
         generationConfig: {
-          responseMimeType: 'application/json',
+          responseMimeType: "application/json",
           responseSchema: {
-            type: 'OBJECT',
+            type: "OBJECT",
             properties: {
-              customerName: { type: 'STRING' },
-              address: { type: 'STRING' },
-              phone: { type: 'STRING' },
-              notes: { type: 'STRING' },
-              urgency: { type: 'STRING' },
-              area: { type: 'STRING' },
-            },
-          },
-        },
+              customerName: { type: "STRING" },
+              address: { type: "STRING" },
+              phone: { type: "STRING" },
+              notes: { type: "STRING" },
+              urgency: { type: "STRING" },
+              area: { type: "STRING" }
+            }
+          }
+        }
       };
 
       const result = await fetchWithRetry(
@@ -417,28 +331,26 @@ function ManagerView({ calls, user, db, appId }) {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(payload)
         }
       );
 
       const textOutput = result.candidates?.[0]?.content?.parts?.[0]?.text;
       if (textOutput) {
         const data = JSON.parse(textOutput);
-        setForm((prev) => ({
+        setForm(prev => ({
           ...prev,
           customerName: data.customerName || prev.customerName,
           address: data.address || prev.address,
           phone: data.phone || prev.phone,
           notes: data.notes || prev.notes,
-          urgency: ['High', 'Medium', 'Low'].includes(data.urgency)
-            ? data.urgency
-            : prev.urgency,
+          urgency: data.urgency || prev.urgency,
           area: SERVICE_AREAS.includes(data.area) ? data.area : prev.area,
-          imageUri: compressedDataUrl,
+          imageUri: compressedDataUrl
         }));
       }
     } catch (err) {
-      setScanError('Failed to process image. Please enter details manually.');
+      setScanError("Scan failed.");
     } finally {
       setIsScanning(false);
     }
@@ -446,284 +358,119 @@ function ManagerView({ calls, user, db, appId }) {
 
   const add = async (e) => {
     e.preventDefault();
-    setScanError(''); // Clear old errors
-
-    // Check if the AI missed any required fields
     if (!form.customerName || !form.address || !form.area) {
-      setScanError(
-        'Please ensure the Customer Name, Service Area, and Address are filled out.'
-      );
+      setScanError("Fill all required fields.");
       return;
     }
-
     try {
-      await addDoc(
-        collection(db, 'artifacts', appId, 'public', 'data', 'serviceCalls'),
-        {
-          ...form,
-          status: 'open',
-          createdAt: Date.now(),
-          createdBy: user,
-          claimedBy: null,
-        }
-      );
-      setShow(false);
-      setForm({
-        customerName: '',
-        address: '',
-        phone: '',
-        notes: '',
-        urgency: 'Medium',
-        imageUri: '',
-        area: '',
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'serviceCalls'), { 
+        ...form, 
+        status: 'open', 
+        createdAt: Date.now(), 
+        createdBy: user,
+        claimedBy: null
       });
-      setScanError('');
+      setShow(false);
+      setForm({ customerName: '', address: '', phone: '', notes: '', urgency: 'Medium', imageUri: '', area: '' });
     } catch (err) {
-      console.error('Error adding call:', err);
-      setScanError('Failed to publish: ' + err.message);
+      setScanError("Failed to save.");
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-slate-800">Service Queue</h2>
-        <button
-          onClick={() => setShow(!show)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors shadow-sm"
+    <div className="space-y-8 w-full">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-3xl shadow-sm border-2 border-slate-200">
+        <h2 className="text-4xl font-black text-black uppercase tracking-tight">Active Queue</h2>
+        <button 
+          onClick={() => setShow(!show)} 
+          className="w-full md:w-auto bg-blue-600 text-white px-10 py-5 rounded-2xl flex items-center justify-center space-x-3 hover:bg-blue-700 transition-all shadow-xl font-black uppercase text-xl border-none cursor-pointer"
         >
-          {show ? (
-            <span>Cancel</span>
-          ) : (
-            <>
-              <Plus size={18} /> <span>New Job</span>
-            </>
-          )}
+          {show ? <span>Cancel Form</span> : <><Plus size={28}/> <span>Add New Job</span></>}
         </button>
       </div>
+      
       {show && (
-        <form
-          onSubmit={add}
-          className="bg-white p-6 rounded-lg shadow-md border space-y-5 animate-in fade-in slide-in-from-top-4 duration-300"
-        >
-          {/* AI Scanner Section */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-blue-800 flex items-center">
-                <Camera size={18} className="mr-2" /> Auto-Fill via Image
-              </h3>
-              <p className="text-xs text-blue-600 mt-1">
-                Upload a photo of the service sheet to automatically extract
-                details.
-              </p>
+        <form onSubmit={add} className="bg-white p-6 md:p-12 rounded-[2.5rem] shadow-2xl border-4 border-slate-300 space-y-10 text-left animate-in fade-in slide-in-from-top-4">
+          <div className="bg-blue-50 border-4 border-blue-200 rounded-3xl p-8 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-inner">
+            <div className="text-left w-full">
+              <h3 className="font-black text-blue-900 flex items-center uppercase text-xl tracking-widest"><Camera size={32} className="mr-4" /> Camera Auto-Fill</h3>
+              <p className="text-lg text-blue-800 mt-2 font-bold opacity-80">Snap a photo of the service call sheet to fill this form instantly.</p>
             </div>
-            <div className="relative">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={isScanning}
-                capture="environment"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-              />
-              <button
-                type="button"
-                disabled={isScanning}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium text-sm flex items-center hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
-              >
-                {isScanning ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>{' '}
-                    Scanning...
-                  </>
-                ) : (
-                  'Choose Image or Take Photo'
-                )}
+            <div className="relative w-full lg:w-auto shrink-0">
+              <input type="file" accept="image/*" onChange={handleImageUpload} disabled={isScanning} capture="environment" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              <button type="button" disabled={isScanning} className="w-full bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-xl uppercase hover:bg-blue-700 shadow-xl border-none active:scale-95 transition-all cursor-pointer">
+                {isScanning ? "Scanning..." : "Open Camera"}
               </button>
             </div>
           </div>
-          {scanError && (
-            <div className="text-red-600 bg-red-50 p-2 rounded text-sm">
-              {scanError}
-            </div>
-          )}
 
-          {/* Explicit Labeled Fields */}
-          <div className="space-y-4">
+          <div className="grid gap-10">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">
-                Customer Name
-              </label>
-              <input
-                placeholder="e.g. John Doe"
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                required
-                value={form.customerName}
-                onChange={(e) =>
-                  setForm({ ...form, customerName: e.target.value })
-                }
-              />
+              <label className="block text-base font-black text-black uppercase tracking-widest mb-4 ml-2">Customer Name</label>
+              <input placeholder="Who is the customer?" className="w-full border-4 border-slate-300 p-6 rounded-2xl text-black font-black text-xl bg-slate-50 focus:border-blue-600 focus:bg-white focus:ring-8 focus:ring-blue-100 outline-none transition-all" required value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} />
             </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">
-                Service Area
-              </label>
-              <select
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
-                required
-                value={form.area}
-                onChange={(e) => setForm({ ...form, area: e.target.value })}
-              >
-                <option value="" disabled>
-                  Select Area...
-                </option>
-                {SERVICE_AREAS.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
+            <div className="grid lg:grid-cols-2 gap-10">
+              <div>
+                <label className="block text-base font-black text-black uppercase tracking-widest mb-4 ml-2">Service Area</label>
+                <select className="w-full border-4 border-slate-300 p-6 rounded-2xl text-black font-black text-xl bg-slate-50 outline-none focus:border-blue-600 focus:bg-white focus:ring-8 focus:ring-blue-100 appearance-none transition-all cursor-pointer" required value={form.area} onChange={e => setForm({...form, area: e.target.value})} >
+                  <option value="" disabled>Select the area...</option>
+                  {SERVICE_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-base font-black text-black uppercase tracking-widest mb-4 ml-2">Phone Number</label>
+                <input placeholder="Contact info" className="w-full border-4 border-slate-300 p-6 rounded-2xl text-black font-black text-xl bg-slate-50 focus:border-blue-600 focus:bg-white focus:ring-8 focus:ring-blue-100 outline-none transition-all" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+              </div>
             </div>
-
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">
-                Address
-              </label>
-              <input
-                placeholder="123 Main St, City, ST"
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                required
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-              />
+              <label className="block text-base font-black text-black uppercase tracking-widest mb-4 ml-2">Job Address</label>
+              <input placeholder="Street, City, State" className="w-full border-4 border-slate-300 p-6 rounded-2xl text-black font-black text-xl bg-slate-50 focus:border-blue-600 focus:bg-white focus:ring-8 focus:ring-blue-100 outline-none transition-all" required value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
             </div>
-
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">
-                Phone Number
-              </label>
-              <input
-                placeholder="(555) 555-5555"
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">
-                Notes (Special Instructions)
-              </label>
-              <textarea
-                placeholder="Gate codes, specific issues, special requests..."
-                rows={3}
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              />
+              <label className="block text-base font-black text-black uppercase tracking-widest mb-4 ml-2">Notes & Instructions</label>
+              <textarea placeholder="Gate codes, gate keys, or specific repair details..." rows={5} className="w-full border-4 border-slate-300 p-6 rounded-2xl text-black font-black text-xl bg-slate-50 focus:border-blue-600 focus:bg-white focus:ring-8 focus:ring-blue-100 outline-none transition-all resize-none" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
             </div>
           </div>
-          <button className="bg-green-600 text-white w-full py-3 rounded-lg font-bold hover:bg-green-700 transition-colors shadow-sm mt-2">
-            Publish Service Call
-          </button>
+          <button className="bg-green-600 text-white w-full py-8 rounded-[1.5rem] font-black text-3xl hover:bg-green-700 shadow-[0_15px_40px_rgb(22,163,74,0.4)] uppercase tracking-widest transition-all active:scale-95 border-none mt-6 cursor-pointer">Post Job to Board</button>
         </form>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-12 text-left mt-10">
         {calls.length === 0 ? (
-          <div className="text-center py-10 text-slate-400">
-            No service calls found.
-          </div>
+          <div className="text-center py-32 text-slate-500 font-black text-2xl uppercase tracking-[0.2em] bg-white rounded-[2rem] border-8 border-dashed border-slate-200">The Board is Empty</div>
         ) : (
           Object.entries(groupCallsByArea(calls)).map(([area, areaCalls]) => (
-            <div key={area} className="space-y-3">
-              <h3 className="font-bold text-slate-700 bg-slate-200/70 px-3 py-1.5 rounded-md inline-flex items-center text-sm shadow-sm">
-                <MapPin size={14} className="mr-1.5 text-slate-500" /> {area}{' '}
-                <span className="ml-1.5 opacity-60">({areaCalls.length})</span>
-              </h3>
-
-              <div className="grid gap-4">
-                {areaCalls.map((c) => (
-                  <div
-                    key={c.id}
-                    className="bg-white p-4 rounded-lg border-l-4 border-blue-400 shadow-sm flex justify-between items-start"
-                  >
-                    <div className="flex-1 pr-4">
-                      <h3 className="font-bold text-slate-800 text-lg">
-                        {c.customerName || 'Unnamed Customer'}
-                      </h3>
-                      <div className="text-sm text-slate-600 mt-1 space-y-1">
-                        <p className="flex items-start">
-                          <MapPin
-                            size={16}
-                            className="mr-1 mt-0.5 text-blue-500 flex-shrink-0"
-                          />{' '}
-                          <span>{c.address}</span>
-                        </p>
-                        {c.phone && (
-                          <p className="flex items-center text-blue-600">
-                            📞{' '}
-                            <span className="ml-1 font-medium">{c.phone}</span>
-                          </p>
-                        )}
+            <div key={area} className="space-y-6">
+              <div className="flex items-center space-x-4 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-xl w-fit border-none">
+                <MapPin size={24} className="text-white" /> 
+                <span className="font-black uppercase text-lg tracking-widest text-white">{area} ({areaCalls.length})</span>
+              </div>
+              <div className="grid gap-8">
+                {areaCalls.map(c => (
+                  <div key={c.id} className="bg-white p-8 md:p-12 rounded-[2rem] border-4 border-slate-300 border-l-[16px] border-l-blue-600 shadow-2xl flex flex-col md:flex-row justify-between items-start gap-10">
+                    <div className="flex-1 w-full">
+                      <h3 className="text-4xl md:text-5xl font-black text-black mb-6 uppercase tracking-tight">{c.customerName}</h3>
+                      <div className="space-y-4 mb-8 font-black">
+                        <p className="flex items-start text-black text-2xl leading-snug"><MapPin size={32} className="mr-4 mt-1 text-blue-600 shrink-0"/> {c.address}</p>
+                        {c.phone && <p className="text-blue-700 text-3xl font-black">📞 <span className="ml-4">{c.phone}</span></p>}
                       </div>
                       {c.notes && (
-                        <div className="mt-2 text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-100">
-                          <span className="font-semibold text-xs text-slate-500 uppercase tracking-wide block mb-1">
-                            Special Instructions:
-                          </span>
-                          {c.notes}
+                        <div className="bg-slate-50 p-8 rounded-[1.5rem] border-4 border-slate-200 mb-8 shadow-inner">
+                          <span className="text-sm font-black text-slate-500 uppercase tracking-widest block mb-4 underline decoration-slate-400 decoration-4 underline-offset-8">Instructions</span>
+                          <p className="text-2xl font-bold text-black leading-relaxed">{c.notes}</p>
                         </div>
                       )}
-                      {c.imageUri && (
-                        <button
-                          onClick={() => setViewImage(c.imageUri)}
-                          className="mt-3 flex items-center text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded border border-blue-100 transition-colors"
-                        >
-                          <FileText size={14} className="mr-1.5" /> View Scanned
-                          Sheet
-                        </button>
-                      )}
-                      <div className="text-[10px] mt-3 space-x-3 flex items-center">
-                        {c.claimedAtLoc && (
-                          <a
-                            href={`https://www.google.com/maps?q=${c.claimedAtLoc.lat},${c.claimedAtLoc.lng}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-500 hover:underline flex items-center"
-                          >
-                            <Navigation size={10} className="mr-1" /> Claimed ↗
-                          </a>
-                        )}
-                        {c.completedAtLoc && (
-                          <a
-                            href={`https://www.google.com/maps?q=${c.completedAtLoc.lat},${c.completedAtLoc.lng}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-green-500 hover:underline flex items-center"
-                          >
-                            <CheckCircle size={10} className="mr-1" /> Finished
-                            ↗
-                          </a>
-                        )}
+                      <div className="flex flex-wrap gap-6 items-center mt-8 pt-8 border-t-4 border-slate-100 font-black text-sm uppercase tracking-widest">
+                        {c.claimedAtLoc && <a href={`https://www.google.com/maps?q=${c.claimedAtLoc.lat},${c.claimedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-blue-700 flex items-center bg-blue-50 px-6 py-3 rounded-xl border-4 border-blue-200 hover:bg-blue-100 transition-colors">📍 Start Location</a>}
+                        {c.completedAtLoc && <a href={`https://www.google.com/maps?q=${c.completedAtLoc.lat},${c.completedAtLoc.lng}`} target="_blank" rel="noreferrer" className="text-green-700 flex items-center bg-green-50 px-6 py-3 rounded-xl border-4 border-green-200 hover:bg-green-100 transition-colors">✅ End Location</a>}
+                        {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="text-black flex items-center bg-slate-200 px-6 py-3 rounded-xl border-4 border-slate-300 hover:bg-slate-300 transition-colors cursor-pointer border-none font-black uppercase text-sm">📄 View Scanned Sheet</button>}
                       </div>
                     </div>
-                    <div className="text-right flex flex-col items-end shrink-0">
-                      <span
-                        className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${
-                          c.status === 'open'
-                            ? 'bg-slate-100 text-slate-600'
-                            : c.status === 'completed'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-blue-100 text-blue-700'
-                        }`}
-                      >
+                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-6 shrink-0 bg-slate-100 p-8 rounded-3xl border-4 border-slate-200">
+                      <span className={`text-base uppercase font-black px-6 py-3 rounded-full border-4 shadow-md ${c.status === 'open' ? 'bg-white text-black border-slate-400' : c.status === 'completed' ? 'bg-green-100 text-green-900 border-green-600' : 'bg-blue-100 text-blue-900 border-blue-600'}`}>
                         {c.status}
                       </span>
-                      <p className="text-xs mt-1 text-slate-500 font-medium">
-                        {c.claimedBy || 'Unassigned'}
-                      </p>
+                      <p className="text-xl font-black text-black flex items-center gap-3 uppercase bg-white px-4 py-2 rounded-xl shadow-sm border-2 border-slate-200"><User size={24} className="text-slate-400"/> {c.claimedBy || 'Open Job'}</p>
                     </div>
                   </div>
                 ))}
@@ -734,25 +481,10 @@ function ManagerView({ calls, user, db, appId }) {
       </div>
 
       {viewImage && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-          onClick={() => setViewImage(null)}
-        >
-          <div
-            className="relative max-w-3xl w-full max-h-[90vh] flex flex-col items-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setViewImage(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 p-2"
-            >
-              <X size={32} />
-            </button>
-            <img
-              src={viewImage}
-              alt="Service Call Sheet"
-              className="max-w-full max-h-[85vh] object-contain rounded bg-white shadow-2xl"
-            />
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4" onClick={() => setViewImage(null)}>
+          <div className="relative max-w-6xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setViewImage(null)} className="absolute -top-16 right-0 text-white hover:text-red-500 p-4 transition-colors border-none cursor-pointer"><X size={64} /></button>
+            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-[2rem] bg-white shadow-[0_0_80px_rgba(255,255,255,0.3)] border-[12px] border-white" />
           </div>
         </div>
       )}
@@ -763,270 +495,111 @@ function ManagerView({ calls, user, db, appId }) {
 function DriverView({ calls, user, db, appId, setLoc }) {
   const [tab, setTab] = useState('open');
   const [viewImage, setViewImage] = useState(null);
-  const available = calls.filter((c) => c.status === 'open');
-  const mine = calls.filter((c) => c.claimedBy === user);
-  const team = calls.filter(
-    (c) => c.status === 'claimed' && c.claimedBy !== user
-  );
+  const available = calls.filter(c => c.status === 'open');
+  const mine = calls.filter(c => c.claimedBy === user);
+  const team = calls.filter(c => c.status === 'claimed' && c.claimedBy !== user);
 
   const update = async (id, status, locKey) => {
     setLoc(true);
     const location = await getCurrentLocation();
     try {
-      await updateDoc(
-        doc(db, 'artifacts', appId, 'public', 'data', 'serviceCalls', id),
-        {
-          status,
-          claimedBy: user,
-          [locKey]: location,
-        }
-      );
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'serviceCalls', id), { status, claimedBy: user, [locKey]: location });
       if (status === 'claimed') setTab('mine');
     } catch (err) {
-      console.error('Error updating call:', err);
+      console.error(err);
     } finally {
       setLoc(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex bg-white rounded-lg p-1 border shadow-sm">
-        <button
-          onClick={() => setTab('open')}
-          className={`flex-1 py-2 rounded text-sm font-bold transition-all ${
-            tab === 'open'
-              ? 'bg-blue-600 text-white shadow'
-              : 'text-slate-500 hover:bg-gray-50'
-          }`}
-        >
-          Available ({available.length})
-        </button>
-        <button
-          onClick={() => setTab('mine')}
-          className={`flex-1 py-2 rounded text-sm font-bold transition-all ${
-            tab === 'mine'
-              ? 'bg-blue-600 text-white shadow'
-              : 'text-slate-500 hover:bg-gray-50'
-          }`}
-        >
-          My Jobs
-        </button>
-        <button
-          onClick={() => setTab('team')}
-          className={`flex-1 py-2 rounded text-sm font-bold transition-all ${
-            tab === 'team'
-              ? 'bg-blue-600 text-white shadow'
-              : 'text-slate-500 hover:bg-gray-50'
-          }`}
-        >
-          Team
-        </button>
+    <div className="space-y-10 w-full">
+      <div className="flex bg-white rounded-[2rem] p-4 border-8 border-slate-300 shadow-2xl sticky top-24 z-10 w-full">
+        {['open', 'mine', 'team'].map((t) => (
+          <button key={t} onClick={() => setTab(t)} className={`flex-1 py-6 rounded-2xl text-lg md:text-xl font-black uppercase tracking-widest transition-all border-none cursor-pointer ${tab === t ? 'bg-blue-600 text-white shadow-2xl scale-[1.03] z-20' : 'text-slate-500 hover:bg-slate-100 hover:text-black'}`}>
+            {t === 'open' ? `Board (${available.length})` : t === 'mine' ? 'My Jobs' : 'Team'}
+          </button>
+        ))}
       </div>
-
-      <div className="space-y-6">
-        {tab === 'open' &&
-          (available.length === 0 ? (
-            <div className="text-center py-10 text-slate-400">
-              No available jobs.
-            </div>
-          ) : (
-            Object.entries(groupCallsByArea(available)).map(
-              ([area, areaCalls]) => (
-                <div key={area} className="space-y-3">
-                  <h3 className="font-bold text-slate-700 bg-slate-200/70 px-3 py-1.5 rounded-md inline-flex items-center text-sm shadow-sm">
-                    <MapPin size={14} className="mr-1.5 text-slate-500" />{' '}
-                    {area}{' '}
-                    <span className="ml-1.5 opacity-60">
-                      ({areaCalls.length})
-                    </span>
-                  </h3>
-
-                  {areaCalls.map((c) => (
-                    <div
-                      key={c.id}
-                      className="bg-white p-5 rounded-lg border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
-                    >
-                      <h3 className="font-bold text-xl text-slate-800">
-                        {c.customerName || 'Unnamed Customer'}
-                      </h3>
-                      <div className="text-sm text-slate-600 mt-2 mb-4 space-y-2">
-                        <p className="flex items-start">
-                          <MapPin
-                            size={16}
-                            className="mr-2 mt-0.5 text-blue-500 flex-shrink-0"
-                          />{' '}
-                          <span>{c.address}</span>
-                        </p>
-                        {c.phone && (
-                          <p className="flex items-center text-blue-600 font-medium">
-                            📞{' '}
-                            <a
-                              href={`tel:${c.phone.replace(/[^0-9]/g, '')}`}
-                              className="ml-2 hover:underline"
-                            >
-                              {c.phone}
-                            </a>
-                          </p>
-                        )}
-                        {c.notes && (
-                          <div className="mt-3 bg-yellow-50 p-3 rounded-md border border-yellow-100 text-slate-800">
-                            <span className="font-bold text-xs uppercase tracking-wide text-yellow-800 block mb-1">
-                              Special Instructions:
-                            </span>
-                            {c.notes}
-                          </div>
-                        )}
-                        {c.imageUri && (
-                          <button
-                            onClick={() => setViewImage(c.imageUri)}
-                            className="mt-3 flex items-center text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors w-full justify-center bg-blue-50 py-2 rounded-md border border-blue-100"
-                          >
-                            <FileText size={16} className="mr-2" /> View
-                            Original Sheet
-                          </button>
-                        )}
+      
+      <div className="space-y-12 text-left w-full">
+        {tab === 'open' && (
+          available.length === 0 ? <div className="text-center py-40 text-slate-500 font-black text-3xl uppercase tracking-[0.3em] bg-white rounded-[2rem] border-8 border-dashed border-slate-200">The Board is Clear</div> :
+          Object.entries(groupCallsByArea(available)).map(([area, areaCalls]) => (
+            <div key={area} className="space-y-6">
+              <div className="flex items-center space-x-4 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-xl w-fit border-none">
+                <MapPin size={28} className="text-white" /> 
+                <span className="font-black uppercase text-xl tracking-widest text-white">{area}</span>
+              </div>
+              {areaCalls.map(c => (
+                <div key={c.id} className="bg-white p-8 md:p-12 rounded-[2.5rem] border-[6px] border-slate-300 shadow-[0_20px_50px_rgba(0,0,0,0.1)] animate-in fade-in slide-in-from-bottom-4 transition-all hover:border-blue-400">
+                  <h3 className="font-black text-5xl md:text-6xl text-black mb-8 uppercase tracking-tighter leading-none">{c.customerName}</h3>
+                  <div className="space-y-8 mb-12 font-black">
+                    <p className="flex items-start text-black text-3xl leading-snug"><MapPin size={40} className="mr-6 mt-1 text-blue-600 shrink-0"/> {c.address}</p>
+                    {c.phone && <p className="text-blue-700 text-4xl font-black underline decoration-[8px] decoration-blue-100 ml-2"><a href={`tel:${c.phone.replace(/[^0-9]/g, '')}`}>📞 <span className="ml-4">{c.phone}</span></a></p>}
+                    {c.notes && (
+                      <div className="bg-yellow-50 p-10 rounded-3xl border-[6px] border-yellow-300 text-black shadow-inner">
+                        <span className="font-black text-lg uppercase tracking-widest text-yellow-900 block mb-4 underline decoration-yellow-400 decoration-[6px] underline-offset-[12px]">Instructions</span>
+                        <p className="font-bold text-3xl leading-relaxed">{c.notes}</p>
                       </div>
-                      <button
-                        onClick={() => update(c.id, 'claimed', 'claimedAtLoc')}
-                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-sm active:scale-95"
-                      >
-                        Claim Job
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )
-            )
-          ))}
-
-        {tab === 'mine' &&
-          (mine.length === 0 ? (
-            <div className="text-center py-10 text-slate-400">
-              You haven't claimed any jobs.
-            </div>
-          ) : (
-            mine.map((c) => (
-              <div
-                key={c.id}
-                className="bg-white p-5 rounded-lg border shadow-sm border-blue-200 animate-in fade-in slide-in-from-bottom-2 duration-300"
-              >
-                <h3 className="font-bold text-xl text-slate-800">
-                  {c.customerName || 'Unnamed Customer'}
-                </h3>
-                <div className="text-sm text-slate-600 mt-2 mb-4 space-y-2">
-                  <p className="flex items-start">
-                    <MapPin
-                      size={16}
-                      className="mr-2 mt-0.5 text-blue-500 flex-shrink-0"
-                    />
-                    <span>
-                      {c.address}{' '}
-                      <span className="font-medium text-blue-600 ml-1">
-                        ({c.area || 'Unassigned Area'})
-                      </span>
-                    </span>
-                  </p>
-                  {c.phone && (
-                    <p className="flex items-center text-blue-600 font-medium">
-                      📞{' '}
-                      <a
-                        href={`tel:${c.phone.replace(/[^0-9]/g, '')}`}
-                        className="ml-2 hover:underline"
-                      >
-                        {c.phone}
-                      </a>
-                    </p>
-                  )}
-                  {c.notes && (
-                    <div className="mt-3 bg-yellow-50 p-3 rounded-md border border-yellow-100 text-slate-800">
-                      <span className="font-bold text-xs uppercase tracking-wide text-yellow-800 block mb-1">
-                        Special Instructions:
-                      </span>
-                      {c.notes}
-                    </div>
-                  )}
-                  {c.imageUri && (
-                    <button
-                      onClick={() => setViewImage(c.imageUri)}
-                      className="mt-3 flex items-center text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors w-full justify-center bg-blue-50 py-2 rounded-md border border-blue-100"
-                    >
-                      <FileText size={16} className="mr-2" /> View Original
-                      Sheet
-                    </button>
-                  )}
-                </div>
-                {c.status === 'claimed' ? (
-                  <button
-                    onClick={() => update(c.id, 'completed', 'completedAtLoc')}
-                    className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors shadow-sm active:scale-95"
-                  >
-                    Mark Completed
-                  </button>
-                ) : (
-                  <div className="text-center text-green-600 font-bold bg-green-50 py-3 rounded-lg border border-green-100">
-                    ✓ Finished
+                    )}
+                    {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="w-full bg-slate-100 py-6 rounded-2xl font-black text-black border-4 border-slate-300 uppercase text-lg tracking-widest flex items-center justify-center gap-4 transition-colors hover:bg-slate-300 border-none mt-6 shadow-md cursor-pointer"><FileText size={32}/> Open Full Job Sheet</button>}
                   </div>
-                )}
+                  <button onClick={() => update(c.id, 'claimed', 'claimedAtLoc')} className="w-full bg-blue-600 text-white py-10 rounded-3xl font-black text-4xl hover:bg-blue-700 shadow-[0_20px_60px_rgba(37,99,235,0.5)] uppercase tracking-[0.2em] active:scale-95 transition-all border-none cursor-pointer">Claim This Job</button>
+                </div>
+              ))}
+            </div>
+          ))
+        )}
+        
+        {tab === 'mine' && (
+          mine.length === 0 ? <div className="text-center py-40 text-slate-500 font-black text-3xl uppercase tracking-[0.3em] bg-white rounded-[2rem] border-8 border-dashed border-slate-200">No Jobs Claimed</div> :
+          mine.map(c => (
+            <div key={c.id} className="bg-white p-8 md:p-12 rounded-[2.5rem] border-[12px] border-blue-600 shadow-2xl">
+              <div className="bg-blue-100 text-blue-900 font-black uppercase tracking-widest text-xl inline-block px-8 py-4 rounded-2xl mb-8 border-4 border-blue-300 shadow-sm">You are working this job</div>
+              <h3 className="font-black text-5xl md:text-6xl text-black mb-8 uppercase tracking-tighter leading-none">{c.customerName}</h3>
+              <div className="space-y-8 mb-12 font-black">
+                <p className="flex items-start text-black text-3xl leading-snug"><MapPin size={40} className="mr-6 mt-1 text-blue-600 shrink-0"/> <span>{c.address} <span className="text-blue-700 ml-4 opacity-80">({c.area})</span></span></p>
+                {c.phone && <p className="text-blue-700 text-4xl font-black ml-2"><a href={`tel:${c.phone.replace(/[^0-9]/g, '')}`}>📞 <span className="ml-4 underline decoration-[8px] decoration-blue-200">{c.phone}</span></a></p>}
+                {c.notes && <div className="bg-yellow-50 p-10 rounded-3xl border-[6px] border-yellow-300 text-black font-bold shadow-inner text-3xl leading-relaxed">
+                  <span className="font-black text-lg uppercase tracking-widest text-yellow-900 block mb-4 underline decoration-yellow-400 decoration-[6px] underline-offset-[12px]">Instructions</span>
+                  {c.notes}
+                </div>}
+                 {c.imageUri && <button onClick={() => setViewImage(c.imageUri)} className="w-full bg-slate-100 py-6 rounded-2xl font-black text-black border-4 border-slate-300 uppercase text-lg tracking-widest flex items-center justify-center gap-4 transition-colors hover:bg-slate-300 border-none mt-6 shadow-md cursor-pointer"><FileText size={32}/> View Job Sheet</button>}
               </div>
-            ))
-          ))}
-
-        {tab === 'team' &&
-          (team.length === 0 ? (
-            <div className="text-center py-10 text-slate-400">
-              No other team members are currently on jobs.
+              {c.status === 'claimed' ? (
+                <button onClick={() => update(c.id, 'completed', 'completedAtLoc')} className="w-full bg-green-600 text-white py-10 rounded-3xl font-black text-4xl hover:bg-green-700 shadow-[0_20px_60px_rgba(22,163,74,0.5)] uppercase tracking-[0.2em] active:scale-95 transition-all border-none cursor-pointer">Mark as Finished</button>
+              ) : (
+                <div className="text-center text-green-900 font-black bg-green-100 py-10 rounded-3xl border-8 border-green-500 uppercase tracking-[0.2em] text-4xl shadow-inner">Job Complete ✓</div>
+              )}
             </div>
-          ) : (
-            team.map((c) => (
-              <div
-                key={c.id}
-                className="bg-white p-4 rounded-lg border border-slate-200 opacity-80 shadow-sm animate-in fade-in duration-300"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="pr-2">
-                    <h3 className="font-bold text-slate-700">
-                      {c.customerName || 'Unnamed Customer'}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1 flex items-start">
-                      <MapPin size={12} className="mr-1 mt-0.5 flex-shrink-0" />
-                      <span>
-                        {c.address}{' '}
-                        <span className="text-blue-500 font-medium">
-                          ({c.area || 'Unassigned'})
-                        </span>
-                      </span>
-                    </p>
-                  </div>
-                  <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase border border-blue-100 flex-shrink-0">
-                    {c.claimedBy}
-                  </span>
+          ))
+        )}
+        
+        {tab === 'team' && (
+          team.length === 0 ? <div className="text-center py-40 text-slate-500 font-black text-3xl uppercase tracking-[0.3em] bg-white rounded-[2rem] border-8 border-dashed border-slate-200">No One Else Working</div> :
+          <div className="grid gap-6">
+            {team.map(c => (
+              <div key={c.id} className="bg-white p-8 rounded-3xl border-4 border-slate-200 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                <div>
+                  <h3 className="font-black text-3xl text-black uppercase tracking-tight">{c.customerName}</h3>
+                  <p className="text-lg text-blue-900 font-black uppercase tracking-widest mt-3">{c.area} • {c.address.split(',')[0]}</p>
+                </div>
+                <div className="flex items-center gap-4 bg-blue-600 text-white px-8 py-5 rounded-2xl shadow-xl border-4 border-white">
+                  <User size={32}/>
+                  <span className="font-black uppercase text-xl tracking-widest">{c.claimedBy}</span>
                 </div>
               </div>
-            ))
-          ))}
+            ))}
+          </div>
+        )}
       </div>
 
       {viewImage && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-          onClick={() => setViewImage(null)}
-        >
-          <div
-            className="relative max-w-3xl w-full max-h-[90vh] flex flex-col items-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setViewImage(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 p-2"
-            >
-              <X size={32} />
-            </button>
-            <img
-              src={viewImage}
-              alt="Service Call Sheet"
-              className="max-w-full max-h-[85vh] object-contain rounded bg-white shadow-2xl"
-            />
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4" onClick={() => setViewImage(null)}>
+          <div className="relative max-w-7xl w-full max-h-[95vh]" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setViewImage(null)} className="absolute -top-20 right-0 text-white hover:text-red-500 p-6 transition-colors border-none cursor-pointer"><X size={80} /></button>
+            <img src={viewImage} alt="Sheet" className="max-w-full max-h-[85vh] object-contain rounded-[3rem] bg-white shadow-[0_0_100px_rgba(255,255,255,0.3)] border-[16px] border-white" />
           </div>
         </div>
       )}
